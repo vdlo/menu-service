@@ -1,41 +1,20 @@
 from typing import Optional, Dict, List
-from model import Company,Section,Dish
+from model import Company, Section, Dish, CompanyFullPackage,Subsection
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 app = FastAPI()
 
 
-
-
-
-class Menu(BaseModel):
-    company: str
-    sections: List[Section]
-
-
-class Dish(BaseModel):
-    dishName: str
-    mainImg: str
-    sliderImgs: List[str] = []
-    subsectionId: int
-    description: str
-    price: int
-    weight: int
-    ingredients: List[str] = []
-    specialMarks: List[str] = []
-    isSpicy: int = 0
-    parentSectionId: int
-
-
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return   Section(id=1, name="FOOD")
 
 
 @app.get("/{name}")
-async def getCompany(name: str)->Company:
+async def GetCompanyMenu(name: str) -> CompanyFullPackage:
     company = Company()
+    company.id = 1
     company.name = name
     company.title = "Simple title, base "
     company.workingTime = {"Sunday": "10:00-22:00",
@@ -49,7 +28,41 @@ async def getCompany(name: str)->Company:
     company.geoTag = "42.3487998848943, 18.767679742284034"
     company.phone = "+38269877678"
     company.instagram = "www.instagram.com/dfdfs"
-    company.sections = {"food": 3, "bar": 5}
-    return company
+    dish = Dish(id=1, name="Meet", mainImg="some-link.jpg",
+                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                price=345, weight=13, )
+    fish = Dish(id=2, name="fish", mainImg="some-link.jpg",
+                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                price=345, weight=13, )
+    drink = Dish(id=3, name="drink", mainImg="some-link.jpg",
+                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                price=345, weight=13, )
+    speshial = Dish(id=4, name="especial", mainImg="some-link.jpg",
+                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                price=345, weight=13, )
+
+    food = Section(id=1, name="FOOD")
+    drinkSS=Section(id=2, name="DRINK")
+    Espesials=Section(id=3,name="ESPECIALS")
+    meet=Subsection(id=1,name="meet")
+    for i in range(10):
+        meet.dishes.append(dish)
+    fishS=Subsection(id=2,name="fish")
+    for i in range(10):
+        fishS.dishes.append(fish)
+    drinkS = Subsection(id=3, name="drink")
+    for i in range(10):
+        fishS.dishes.append(drink)
+    food.subsections.append(meet)
+    food.subsections.append(fishS)
+    drinkSS.subsections.append(drinkS)
+    for i in range(10):
+        Espesials.dishes.append(speshial)
+
+    result = CompanyFullPackage(companyInfo=company)
+    result.menu.append(food)
+    result.menu.append(drinkSS)
+    result.menu.append(Espesials)
 
 
+    return result
