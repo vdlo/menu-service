@@ -1,5 +1,5 @@
 from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage,Subsection
+from model import Company, Section, Dish, CompanyFullPackage, Subsection
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -8,11 +8,31 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return   Section(id=1, name="FOOD")
+    return Section(id=1, name="FOOD")
+
+
+@app.post("/cmcompany")
+async def createModifyCompany(company: Company):
+    return company
+
+
+@app.post("/cmsection")
+async def createModifySection(section: Section):
+    return Section
+
+
+@app.post("/cmsubsection")
+async def createModifySubsection(subsection: Subsection):
+    return subsection
+
+
+@app.post("/cmdish")
+async def createModifyDish(dish: Dish):
+    return dish
 
 
 @app.get("/{name}")
-async def GetCompanyMenu(name: str) -> CompanyFullPackage:
+async def cetCompanyMenu(name: str) -> CompanyFullPackage:
     company = Company()
     company.id = 1
     company.name = name
@@ -35,19 +55,19 @@ async def GetCompanyMenu(name: str) -> CompanyFullPackage:
                 description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
                 price=345, weight=13, )
     drink = Dish(id=3, name="drink", mainImg="some-link.jpg",
-                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                price=345, weight=13, )
+                 description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                 price=345, weight=13, )
     speshial = Dish(id=4, name="especial", mainImg="some-link.jpg",
-                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                price=345, weight=13, )
+                    description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
+                    price=345, weight=13, )
 
     food = Section(id=1, name="FOOD")
-    drinkSS=Section(id=2, name="DRINK")
-    Espesials=Section(id=3,name="ESPECIALS")
-    meet=Subsection(id=1,name="meet")
+    drinkSS = Section(id=2, name="DRINK")
+    Espesials = Section(id=3, name="ESPECIALS")
+    meet = Subsection(id=1, name="meet")
     for i in range(10):
         meet.dishes.append(dish)
-    fishS=Subsection(id=2,name="fish")
+    fishS = Subsection(id=2, name="fish")
     for i in range(10):
         fishS.dishes.append(fish)
     drinkS = Subsection(id=3, name="drink")
@@ -63,6 +83,5 @@ async def GetCompanyMenu(name: str) -> CompanyFullPackage:
     result.menu.append(food)
     result.menu.append(drinkSS)
     result.menu.append(Espesials)
-
 
     return result

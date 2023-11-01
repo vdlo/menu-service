@@ -16,6 +16,7 @@ class Company(BaseModel):
 
 
 class Dish(BaseModel):
+    companyId: int = 0
     id: int
     name: str
     mainImg: str
@@ -29,12 +30,14 @@ class Dish(BaseModel):
 
 
 class Subsection(BaseModel):
+    companyId: int = 0
     id: int
     name: str
     dishes: List[Dish] = []
 
 
 class Section(BaseModel):
+    companyId: int = 0
     id: int
     name: str
     subsections: List[Subsection] = []
