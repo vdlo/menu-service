@@ -1,15 +1,60 @@
 from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage, Subsection
-from fastapi import FastAPI
+from model import Company, Section, Dish, CompanyFullPackage, Subsection,User
+from fastapi import FastAPI,HTTPException,Depends
 from pydantic import BaseModel
+from sql import MenuSQL
+from passlib.context import CryptContext
+from jwtA import create_jwt_token,verify_jwt_token
+from fastapi.security import OAuth2PasswordBearer
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
 
 
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    decoded_data = verify_jwt_token(token)
+    if not decoded_data:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    sql=MenuSQL()
+    user = sql.getUser(decoded_data["sub"])  # Получите пользователя из базы данных
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    return user
+@app.get("/users/me")
+def get_user_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
 @app.get("/")
 async def root():
-    return Section(id=1, name="FOOD")
+    sql=MenuSQL()
+    res=sql.getUser("admind")
+    #newUser=User(name='admin',hash="dfsfsdfsdfsdf")
+    #res=sql.newUser(newUser)
+    return res
 
+@app.post("/signup")
+async def  signUp(name: str,password: str):
+    sql=MenuSQL()
+    if sql.getUser(name=name):
+        raise HTTPException(status_code=400, detail="Nickname is busy")
+    hashed_password = pwd_context.hash(password)
+    newUser=sql.newUser(User(name=name,hash=hashed_password))
+    return newUser
+
+@app.post("/token")
+def authenticate_user(username: str, password: str):
+    sql = MenuSQL()
+    user = sql.getUser(username) # Получите пользователя из базы данных
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    is_password_correct = pwd_context.verify(password, user.hash)
+
+    if not is_password_correct:
+        raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
+    jwt_token = create_jwt_token({"sub": user.name})
+    return {"access_token": jwt_token, "token_type": "bearer"}
 
 @app.post("/cmcompany")
 async def createModifyCompany(company: Company):

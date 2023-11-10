@@ -47,3 +47,10 @@ class Section(BaseModel):
 class CompanyFullPackage(BaseModel):
     companyInfo: Company
     menu: List[Section] = []
+
+
+class User(BaseModel):
+    name: str
+    password: str = None
+    hash: str = None
+    companyId: int = 0
