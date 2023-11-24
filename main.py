@@ -120,6 +120,7 @@ async def cetCompanyMenu(name: str) -> CompanyFullPackage:
     food = Section(id=1, name="FOOD")
     drinkSS = Section(id=2, name="DRINK")
     Espesials = Section(id=3, name="ESPECIALS")
+    speshials= Subsection(id=8, name="Espeshials")
     meet = Subsection(id=1, name="meet")
     for i in range(10):
         meet.dishes.append(dish)
@@ -132,8 +133,10 @@ async def cetCompanyMenu(name: str) -> CompanyFullPackage:
     food.subsections.append(meet)
     food.subsections.append(fishS)
     drinkSS.subsections.append(drinkS)
+
     for i in range(10):
-        Espesials.dishes.append(speshial)
+        speshials.dishes.append(speshial)
+    Espesials.subsections.append(speshials)
 
     result = CompanyFullPackage(companyInfo=company)
     result.menu.append(food)
