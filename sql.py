@@ -32,19 +32,23 @@ class MenuSQL():
         return result
     def cmcompany(self,company: Company):
         cursor = self.cnx.cursor(dictionary=True)
-        query =("INSERT INTO menudb.company (id, name,description,address,phone,geoTag,instagram,faceBook,img) "
-                "VALUES(%(id)s,%(name)s,%(description)s,%(address)s,%(phone)s,"
-                "%(geoTag)s,%(instagram)s,%(faceBook)s,%(img)s)"
-                " ON DUPLICATE KEY UPDATE "
-                "name=%(name)s,"
-                "description=%(description)s,"
-                "address=%(address)s,"
-                "phone=%(phone)s,"
-                "geoTag=%(geoTag)s,"
-                "instagram=%(instagram)s,"
-                "faceBook=%(faceBook)s,"
-                "img=%(img)s)")
-        print(cursor._raw(query,company.model_dump(exclude=['workingTime'])))
+        query = (
+            "INSERT INTO menudb.company (id, name, description, title, address, phone, geoTag, instagram, faceBook, img) "
+            "VALUES (%(id)s, %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s, "
+            "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s) "
+            "ON DUPLICATE KEY UPDATE "
+            "name = %(name)s,"
+            "description = %(description)s,"
+            "title = %(title)s,"
+            "address = %(address)s,"
+            "phone = %(phone)s,"
+            "geoTag = %(geoTag)s,"
+            "instagram = %(instagram)s,"
+            "faceBook = %(faceBook)s,"
+            "img = %(img)s"
+        )
+        cursor.execute(query,company.model_dump(exclude=['workingTime']))
+        self.cnx.commit()
         result=self.getCompany(company.id)
         return result
 

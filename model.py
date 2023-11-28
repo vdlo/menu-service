@@ -13,6 +13,7 @@ class Company(BaseModel):
     geoTag: Optional[str] = None
     instagram: Optional[str] = None
     faceBook: Optional[str] = None
+    img: str = None
 
 
 class Dish(BaseModel):
