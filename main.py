@@ -35,6 +35,11 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 @app.get("/users/me")
 def get_user_me(current_user: User = Depends(get_current_user)):
     return current_user
+@app.get("/admin/getcompany")
+async def GetCompany(current_user: User = Depends(get_current_user)):
+    sql=MenuSQL()
+    return sql.getCompany(current_user.companyId)
+
 
 @app.get("/")
 async def root():

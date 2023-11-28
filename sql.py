@@ -1,7 +1,7 @@
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
-from model import User
+from model import User,Company
 config = {
     'user': 'admin',
     'password': 'RhceDL!2',
@@ -19,12 +19,16 @@ class MenuSQL():
         self.cnx.close()
 
     def getCompany(self, id):
-        cursor = self.cnx.cursor()
+        cursor = self.cnx.cursor(dictionary=True)
 
         query = ("SELECT * FROM menudb.company "
-                 "where id=1")
-        cursor.execute(query)
-        result=cursor.fetchall()
+                 "where id=%s")
+        cursor.execute(query,[id])
+
+        gg = cursor.fetchone()
+        if not gg:
+            return gg
+        result = Company(**gg)
         return result
 
     def getUser(self, name: str):
