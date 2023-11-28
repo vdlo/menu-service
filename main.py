@@ -40,7 +40,9 @@ async def GetCompany(current_user: User = Depends(get_current_user)):
     sql=MenuSQL()
     return sql.getCompany(current_user.companyId)
 @app.post("/admin/cmcompany")
-async def createModifyCompany(company: Company):
+async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
+    if not company.id==current_user.companyId:
+        raise HTTPException(status_code=400, detail="Incorrect user identification")
     sql=MenuSQL()
     return company
 
