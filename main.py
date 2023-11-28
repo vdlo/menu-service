@@ -39,6 +39,11 @@ def get_user_me(current_user: User = Depends(get_current_user)):
 async def GetCompany(current_user: User = Depends(get_current_user)):
     sql=MenuSQL()
     return sql.getCompany(current_user.companyId)
+@app.post("/admin/cmcompany")
+async def createModifyCompany(company: Company):
+    sql=MenuSQL()
+    return company
+
 
 
 @app.get("/")
@@ -71,10 +76,6 @@ def authenticate_user(username: str, password: str):
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
     jwt_token = create_jwt_token({"sub": user.name})
     return {"access_token": jwt_token, "token_type": "bearer"}
-
-@app.post("/cmcompany")
-async def createModifyCompany(company: Company):
-    return company
 
 
 @app.post("/cmsection")

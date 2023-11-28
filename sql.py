@@ -30,6 +30,23 @@ class MenuSQL():
             return gg
         result = Company(**gg)
         return result
+    def cmcompany(self,company: Company):
+        cursor = self.cnx.cursor(dictionary=True)
+        query =("INSERT INTO menudb.company (id, name,description,address,phone,geoTag,instagram,faceBook,img) "
+                "VALUES(%(id)s,%(name)s,%(description)s,%(address)s,%(phone)s,"
+                "%(geoTag)s,%(instagram)s,%(faceBook)s,%(img)s)"
+                " ON DUPLICATE KEY UPDATE "
+                "name=%(name)s,"
+                "description=%(description)s,"
+                "address=%(address)s,"
+                "phone=%(phone)s,"
+                "geoTag=%(geoTag)s,"
+                "instagram=%(instagram)s,"
+                "faceBook=%(faceBook)s,"
+                "img=%(img)s)")
+        print(cursor._raw(query,company.model_dump(exclude=['workingTime'])))
+        result=self.getCompany(company.id)
+        return result
 
     def getUser(self, name: str):
         cursor = self.cnx.cursor(dictionary=True)
@@ -49,7 +66,7 @@ class MenuSQL():
         query=("INSERT INTO menudb.users"
                "(name,hash,companyId)"
                " VALUES (%(name)s, %(hash)s, %(companyId)s)")
-        cursor.execute(query,user.dict())
+        cursor.execute(query,user.model_dump())
         self.cnx.commit()
         result=self.getUser(user.name)
         return result
