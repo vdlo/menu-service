@@ -3,7 +3,7 @@ import json
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
-from model import User, Company, Dish
+from model import User, Company, Dish, Hierarchy,HierarchyItem
 
 config = {
     'user': 'admin',
@@ -75,37 +75,51 @@ class MenuSQL():
 
     def getDishTree(self, company_id):
         cursor = self.cnx.cursor(dictionary=True)
+        result = Hierarchy()
         query = (
-            "WITH RECURSIVE SectionTree AS ("
-            "SELECT "
-            "id, "
-            "name AS title,"
-            "parent_id "
-            "FROM "
-            "    sections "
-            "UNION ALL "
-            "SELECT "
-            "d.id, "
-            "d.name, "
-            "d.parentId "
-            "FROM "
-            "dishes AS d "
-            "JOIN "
-            "SectionTree AS st ON d.parentId = st.id "
-            ") "
-            "SELECT "
-            "    id, "
-            "title, "
-            "parent_id "
-            "FROM "
-            "SectionTree "
+            "SELECT concat('s',`sections`.`id`) as id,"
+            "`sections`.`name` as title,"
+            "`sections`.`parent_id`,"
+            "`sections`.`espeshial`"
+            "FROM `menudb`.`sections`"
+            "where company_id=%s and parent_id is null"
         )
+        cursor.execute(query, [company_id])
+        fetch = cursor.fetchall()
+        for gg in fetch:
+            firstLevelChild = HierarchyItem(**gg)
+            query = (
+                "SELECT concat('s',`sections`.`id`) as id,"
+                "`sections`.`name` as title,"
+                "`sections`.`parent_id`,"
+                "`sections`.`espeshial`"
+                "FROM `menudb`.`sections`"
+                "where  parent_id =%s"
+            )
+            cursor.execute(query, [int(gg['id'].replace('s',''))])
+            fsub=cursor.fetchall();
+            for fs in fsub:
+                secondLevelSub= HierarchyItem(**fs)
+                secondLevelSub.children=self.getHierarhyChilds(int(fs['id'].replace('s','')))
+                firstLevelChild.children.append(secondLevelSub)
+            result.dataTree.append(firstLevelChild)
 
-        cursor.execute(query)
-        result = cursor.fetchall()
+        return result
 
-        # Преобразование результата в JSON
-        return  json.dumps(result, ensure_ascii=False, indent=2)
+    def getHierarhyChilds(self, id):
+        cursor = self.cnx.cursor(dictionary=True)
+        result = []
+        query = (
+            "SELECT concat('d',id) as id,"
+            "name as title "
+            "FROM menudb.dishes "
+            "where parentId=%s"
+        )
+        cursor.execute(query, [id])
+        fetch = cursor.fetchall()
+        for gg in fetch:
+            result.append(HierarchyItem(**gg))
+        return result
 
     def getUser(self, name: str):
         cursor = self.cnx.cursor(dictionary=True)

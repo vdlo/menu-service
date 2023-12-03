@@ -1,5 +1,5 @@
 from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage, Subsection, User
+from model import Company, Section, Dish, CompanyFullPackage, Subsection, User,Hierarchy,HierarchyItem
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -68,7 +68,9 @@ async def GetDishTree():
             "'id':'s4',      'title':'Vine',      'children':[         {            'id':'d3',            "
             "'title':'white vine'         },         {            'id':'d4',            'title':'red vine'         }  "
             "    ]   }]   }")
-    return result
+    sql=MenuSQL()
+    return sql.getDishTree(1)
+
 
 @app.post("/admin/cmdish")
 async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):

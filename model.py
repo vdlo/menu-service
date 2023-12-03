@@ -55,3 +55,13 @@ class User(BaseModel):
     password: str = None
     hash: str = None
     companyId: int = 0
+
+
+class HierarchyItem(BaseModel):
+    id: str
+    title: str
+    children: List = []
+
+
+class Hierarchy(BaseModel):
+    dataTree : List[HierarchyItem] = []
