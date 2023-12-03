@@ -1,10 +1,10 @@
 from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage, Subsection,User
-from fastapi import FastAPI,HTTPException,Depends
+from model import Company, Section, Dish, CompanyFullPackage, Subsection, User
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sql import MenuSQL
 from passlib.context import CryptContext
-from jwtA import create_jwt_token,verify_jwt_token
+from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,48 +27,78 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     decoded_data = verify_jwt_token(token)
     if not decoded_data:
         raise HTTPException(status_code=400, detail="Invalid token")
-    sql=MenuSQL()
+    sql = MenuSQL()
     user = sql.getUser(decoded_data["sub"])  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=400, detail="User not found")
     return user
+
+
 @app.get("/users/me")
 def get_user_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
 @app.get("/admin/getcompany")
 async def GetCompany(current_user: User = Depends(get_current_user)):
-    sql=MenuSQL()
+    sql = MenuSQL()
     return sql.getCompany(current_user.companyId)
+
+
 @app.post("/admin/cmcompany")
 async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
-  #  if not company.id==current_user.companyId:
-    #    raise HTTPException(status_code=400, detail="Incorrect user identification")
-    sql=MenuSQL()
+    if not company.id==current_user.companyId:
+        raise HTTPException(status_code=400, detail="Incorrect user identification")
+    sql = MenuSQL()
     return sql.cmcompany(company)
 
 
+@app.get("/admin/getdishes")
+async def GetDishes(current_user: User = Depends(get_current_user)):
 
+    sql = MenuSQL()
+    return sql.getDishes(current_user.companyId)
+
+@app.get("/admin/getdishtree")
+async def GetDishTree():
+
+    result=("{'id':'s1','title':'Food','children':[   {      'id':'s2',      'title':'Meat',      'children':[        "
+            " {            'id':'d1',            'title':'file minion'         },         {            'id':'d2',     "
+            "       'title':'chicken'         }      ]   }]   },   {'id':'s3','title':'Drink','children':[   {      "
+            "'id':'s4',      'title':'Vine',      'children':[         {            'id':'d3',            "
+            "'title':'white vine'         },         {            'id':'d4',            'title':'red vine'         }  "
+            "    ]   }]   }")
+    return result
+
+@app.post("/admin/cmdish")
+async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
+    if not company.id==current_user.companyId:
+        raise HTTPException(status_code=400, detail="Incorrect user identification")
+    sql = MenuSQL()
+    return sql.cmcompany(company)
 @app.get("/")
 async def root():
-    sql=MenuSQL()
-    res=sql.getUser("admind")
-    #newUser=User(name='admin',hash="dfsfsdfsdfsdf")
-    #res=sql.newUser(newUser)
+    sql = MenuSQL()
+    res = sql.getUser("admind")
+    # newUser=User(name='admin',hash="dfsfsdfsdfsdf")
+    # res=sql.newUser(newUser)
     return res
 
+
 @app.post("/signup")
-async def  signUp(name: str,password: str):
-    sql=MenuSQL()
+async def signUp(name: str, password: str):
+    sql = MenuSQL()
     if sql.getUser(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
-    newUser=sql.newUser(User(name=name,hash=hashed_password))
+    newUser = sql.newUser(User(name=name, hash=hashed_password))
     return newUser
+
 
 @app.post("/token")
 def authenticate_user(username: str, password: str):
     sql = MenuSQL()
-    user = sql.getUser(username) # Получите пользователя из базы данных
+    user = sql.getUser(username)  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
@@ -128,7 +158,7 @@ async def cetCompanyMenu(name: str) -> CompanyFullPackage:
     food = Section(id=1, name="FOOD")
     drinkSS = Section(id=2, name="DRINK")
     Espesials = Section(id=3, name="ESPECIALS")
-    speshials= Subsection(id=8, name="Espeshials")
+    speshials = Subsection(id=8, name="Espeshials")
     meet = Subsection(id=1, name="meet")
     for i in range(10):
         meet.dishes.append(dish)
