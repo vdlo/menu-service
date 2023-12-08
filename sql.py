@@ -57,19 +57,18 @@ class MenuSQL():
         return result
 
     def cmsection(self, section: Section):
-
         cursor = self.cnx.cursor(dictionary=True)
         query = (
-            "INSERT INTO menudb.sections (id,company_id,name,parent_id,espeshial,deactivate)) "
-            "VALUES (%(id)s, %(company_id)s, %(name)s, %(parent_id)s, %(espeshial)s, %(deactivate)s"
+            "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, deactivate) "
+            "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(deactivate)s) "
             "ON DUPLICATE KEY UPDATE "
-            "company_id = %(company_id)s,"
+            "company_id = %(companyId)s,"
             "name = %(name)s,"
             "parent_id = %(parent_id)s,"
             "espeshial = %(espeshial)s,"
             "deactivate = %(deactivate)s"
         )
-        cursor.execute(query, section.model_dump())
+        cursor.execute(query, section.model_dump(exclude=['subsections','dishes']))
         self.cnx.commit()
         result = self.getCompany(section.id)
         return result

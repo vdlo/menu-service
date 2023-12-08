@@ -1,5 +1,5 @@
 from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage, Subsection, User,Hierarchy,HierarchyItem
+from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -47,35 +47,38 @@ async def GetCompany(current_user: User = Depends(get_current_user)):
 
 @app.post("/admin/cmcompany")
 async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
-    if not company.id==current_user.companyId:
+    if not company.id == current_user.companyId:
         raise HTTPException(status_code=400, detail="Incorrect user identification")
     sql = MenuSQL()
     return sql.cmcompany(company)
+
+
 @app.post("/admin/cmsection")
-async def createModifySection(section:Section, current_user: User = Depends(get_current_user)):
-    sql = MenuSQL
-    return sql.cmsection(section)
+async def createModifySection(section_in: Section, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.cmsection(section_in)
+
 
 @app.get("/admin/getdishes")
 async def GetDishes(current_user: User = Depends(get_current_user)):
-
     sql = MenuSQL()
     return sql.getDishes(current_user.companyId)
 
+
 @app.get("/admin/getdishtree")
 async def GetDishTree():
-
-
-    sql=MenuSQL()
+    sql = MenuSQL()
     return sql.getDishTree(1)
 
 
 @app.post("/admin/cmdish")
 async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
-    if not company.id==current_user.companyId:
+    if not company.id == current_user.companyId:
         raise HTTPException(status_code=400, detail="Incorrect user identification")
     sql = MenuSQL()
     return sql.cmcompany(company)
+
+
 @app.get("/")
 async def root():
     sql = MenuSQL()
