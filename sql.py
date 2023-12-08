@@ -99,7 +99,7 @@ class MenuSQL():
             "`sections`.`parent_id`,"
             "`sections`.`espeshial`"
             "FROM `menudb`.`sections`"
-            "where company_id=%s and parent_id is null"
+            "where company_id=%s and (parent_id is null or parent_id=0)"
         )
         cursor.execute(query, [company_id])
         fetch = cursor.fetchall()
