@@ -42,7 +42,7 @@ class Section(BaseModel):
     id: int = 0
     name: str
     deactivate: bool = False
-    parent_id: int = 0
+    parent_id: int = None
     espeshial: bool = False
     subsections: List[Subsection] = []
     dishes: List[Dish] = []
