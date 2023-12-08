@@ -114,11 +114,11 @@ class MenuSQL():
                 "FROM `menudb`.`sections`"
                 "where  parent_id =%s"
             )
-            cursor.execute(query, [int(gg['id'].replace('s',''))])
+            cursor.execute(query, [gg['id']])
             fsub=cursor.fetchall();
             for fs in fsub:
                 secondLevelSub= HierarchyItem(**fs)
-                secondLevelSub.children=self.getHierarhyChilds(int(fs['id'].replace('s','')))
+                secondLevelSub.children=self.getHierarhyChilds(fs['id'])
                 firstLevelChild.children.append(secondLevelSub)
             result.dataTree.append(firstLevelChild)
 
