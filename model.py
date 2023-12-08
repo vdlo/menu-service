@@ -39,9 +39,9 @@ class Subsection(BaseModel):
 
 class Section(BaseModel):
     companyId: int = 0
-    id: int
+    id: int = 0
     name: str
-    deactivate: bool
+    deactivate: bool = False
     parent_id: int = 0
     espeshial: bool = False
     subsections: List[Subsection] = []
