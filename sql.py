@@ -3,7 +3,7 @@ import json
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
-from model import User, Company, Dish, Hierarchy,HierarchyItem
+from model import User, Company, Dish, Hierarchy,HierarchyItem,Section
 
 config = {
     'user': 'admin',
@@ -54,6 +54,24 @@ class MenuSQL():
         cursor.execute(query, company.model_dump(exclude=['workingTime']))
         self.cnx.commit()
         result = self.getCompany(company.id)
+        return result
+
+    def cmsection(self, section: Section):
+        
+        cursor = self.cnx.cursor(dictionary=True)
+        query = (
+            "INSERT INTO menudb.sections (id,company_id,name,parent_id,espeshial,deactivate)) "
+            "VALUES (%(id)s, %(company_id)s, %(name)s, %(parent_id)s, %(espeshial)s, %(deactivate)s"
+            "ON DUPLICATE KEY UPDATE "
+            "company_id = %(company_id)s,"
+            "name = %(name)s,"
+            "parent_id = %(parent_id)s,"
+            "espeshial = %(espeshial)s,"
+            "deactivate = %(deactivate)s"
+        )
+        cursor.execute(query, section.model_dump())
+        self.cnx.commit()
+        result = self.getCompany(section.id)
         return result
 
     def getDishes(self, id):

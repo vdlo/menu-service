@@ -51,7 +51,10 @@ async def createModifyCompany(company: Company, current_user: User = Depends(get
         raise HTTPException(status_code=400, detail="Incorrect user identification")
     sql = MenuSQL()
     return sql.cmcompany(company)
-
+@app.post("/admin/cmsection")
+async def createModifySection(section:Section, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL
+    return sql.cmsection(section)
 
 @app.get("/admin/getdishes")
 async def GetDishes(current_user: User = Depends(get_current_user)):
@@ -62,12 +65,7 @@ async def GetDishes(current_user: User = Depends(get_current_user)):
 @app.get("/admin/getdishtree")
 async def GetDishTree():
 
-    result=("{'id':'s1','title':'Food','children':[   {      'id':'s2',      'title':'Meat',      'children':[        "
-            " {            'id':'d1',            'title':'file minion'         },         {            'id':'d2',     "
-            "       'title':'chicken'         }      ]   }]   },   {'id':'s3','title':'Drink','children':[   {      "
-            "'id':'s4',      'title':'Vine',      'children':[         {            'id':'d3',            "
-            "'title':'white vine'         },         {            'id':'d4',            'title':'red vine'         }  "
-            "    ]   }]   }")
+
     sql=MenuSQL()
     return sql.getDishTree(1)
 

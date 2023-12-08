@@ -41,6 +41,7 @@ class Section(BaseModel):
     companyId: int = 0
     id: int
     name: str
+    deactivate: bool
     subsections: List[Subsection] = []
     dishes: List[Dish] = []
 
