@@ -57,7 +57,7 @@ class MenuSQL():
         return result
 
     def cmsection(self, section: Section):
-        
+
         cursor = self.cnx.cursor(dictionary=True)
         query = (
             "INSERT INTO menudb.sections (id,company_id,name,parent_id,espeshial,deactivate)) "
@@ -95,7 +95,7 @@ class MenuSQL():
         cursor = self.cnx.cursor(dictionary=True)
         result = Hierarchy()
         query = (
-            "SELECT concat('s',`sections`.`id`) as id,"
+            "SELECT `sections`.`id` as id,"
             "`sections`.`name` as title,"
             "`sections`.`parent_id`,"
             "`sections`.`espeshial`"
@@ -107,7 +107,7 @@ class MenuSQL():
         for gg in fetch:
             firstLevelChild = HierarchyItem(**gg)
             query = (
-                "SELECT concat('s',`sections`.`id`) as id,"
+                "SELECT `sections`.`id` as id,"
                 "`sections`.`name` as title,"
                 "`sections`.`parent_id`,"
                 "`sections`.`espeshial`"
@@ -128,7 +128,7 @@ class MenuSQL():
         cursor = self.cnx.cursor(dictionary=True)
         result = []
         query = (
-            "SELECT concat('d',id) as id,"
+            "SELECT id as id,"
             "name as title "
             "FROM menudb.dishes "
             "where parentId=%s"

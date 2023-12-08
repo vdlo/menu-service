@@ -59,7 +59,7 @@ class User(BaseModel):
 
 
 class HierarchyItem(BaseModel):
-    id: str
+    id: int
     title: str
     children: List = []
 
