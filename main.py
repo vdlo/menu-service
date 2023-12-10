@@ -79,12 +79,7 @@ async def GetDishTree():
     return sql.getDishTree(1)
 
 
-@app.post("/admin/cmdish")
-async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
-    if not company.id == current_user.companyId:
-        raise HTTPException(status_code=400, detail="Incorrect user identification")
-    sql = MenuSQL()
-    return sql.cmcompany(company)
+
 
 
 @app.get("/")
@@ -129,11 +124,6 @@ async def createModifySection(section: Section):
 @app.post("/cmsubsection")
 async def createModifySubsection(subsection: Subsection):
     return subsection
-
-
-@app.post("/cmdish")
-async def createModifyDish(dish: Dish):
-    return dish
 
 
 @app.get("/{name}")
