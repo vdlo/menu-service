@@ -1,6 +1,7 @@
+import uuid
 from typing import Optional, Dict, List
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends,File, UploadFile
 from pydantic import BaseModel
 from sql import MenuSQL
 from passlib.context import CryptContext
@@ -8,6 +9,7 @@ from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
+IMAGEDIR = "images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
@@ -81,6 +83,16 @@ async def GetDishTree():
 
 
 
+@app.post("/admin/uploadfile/")
+async def create_upload_file(file: UploadFile = File(...)):
+    file.filename = f"{uuid.uuid4()}.jpg"
+    contents = await file.read()
+
+    # save the file
+    with open(f"{IMAGEDIR}{file.filename}", "wb") as f:
+        f.write(contents)
+
+    return {"filename": file.filename}
 
 @app.get("/")
 async def root():
