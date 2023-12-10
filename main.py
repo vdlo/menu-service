@@ -58,12 +58,20 @@ async def createModifySection(section_in: Section, current_user: User = Depends(
     sql = MenuSQL()
     return sql.cmsection(section_in)
 
+@app.post("/admin/cmdish")
+async def createModifyDish(dish: Dish, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.cmDish(dish)
 
 @app.get("/admin/getdishes")
 async def GetDishes(current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.getDishes(current_user.companyId)
 
+@app.get("/admin/getdish")
+async def GetDishes(id: int, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.getDish(id)
 
 @app.get("/admin/getdishtree")
 async def GetDishTree():

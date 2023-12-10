@@ -87,9 +87,33 @@ class MenuSQL():
     def cmDish(self, dish: Dish):
         cursor = self.cnx.cursor(dictionary=True)
         query = (
-            "INSERT INTO  "
-        )
+            "INSERT INTO  menudb.dishes (id,name,mainImg,description,price,weight,isSpicy,parentId,companyId) "
+            "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, %(parentId)s, %(companyId)s ) "
+            " ON DUPLICATE KEY UPDATE "
+            " description = %(description)s,"
+            " name = %(name)s,"
+            " mainImg = %(mainImg)s,"
+            " price = %(price)s,"
+            " weight = %(weight)s,"
+            " isSpicy = %(isSpicy)s,"
+            " parentId = %(parentId)s,"
+            " companyId = %(companyId)s "
 
+             )
+        cursor.execute(query, dish.model_dump(exclude=['sliderImgs','ingredients','specialMarks']))
+        self.cnx.commit()
+        result = self.getDish(cursor.lastrowid)
+        return result
+    def getDish(self,id):
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ("SELECT * FROM menudb.dishes "
+                 "where id=%s")
+        cursor.execute(query, [id])
+        gg = cursor.fetchone()
+        if not gg:
+            return gg
+        result = Dish(**gg)
+        return result
     def getDishTree(self, company_id):
         cursor = self.cnx.cursor(dictionary=True)
         result = Hierarchy()

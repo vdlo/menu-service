@@ -18,17 +18,17 @@ class Company(BaseModel):
 
 class Dish(BaseModel):
     companyId: int = 0
-    id: int
+    id: int = None
     name: str
     mainImg: str
     sliderImgs: List[str] = []
     description: str
-    price: int
+    price: float
     weight: int
     ingredients: List[str] = []
     specialMarks: List[str] = []
     isSpicy: int = 0
-
+    parentId:  int =0
 
 class Subsection(BaseModel):
     companyId: int = 0
