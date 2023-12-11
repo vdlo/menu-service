@@ -114,7 +114,7 @@ async def signUp(name: str, password: str):
     return newUser
 
 
-@app.post("/token")
+@app.post("/admin/token")
 def authenticate_user(username: str, password: str):
     EXPIRATION_TIME = timedelta(minutes=100000)
     sql = MenuSQL()
