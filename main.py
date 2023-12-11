@@ -115,14 +115,14 @@ async def signUp(name: str, password: str):
 
 
 @app.post("/admin/token")
-def authenticate_user(username: str, password: str):
+def authenticate_user(user: User):
     EXPIRATION_TIME = timedelta(minutes=100000)
     sql = MenuSQL()
-    user = sql.getUser(username)  # Получите пользователя из базы данных
+    user = sql.getUser(user.name)  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    is_password_correct = pwd_context.verify(password, user.hash)
+    is_password_correct = pwd_context.verify(user.password, user.hash)
 
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
