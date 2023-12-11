@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timedelta
 
 IMAGEDIR = "images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -115,6 +116,7 @@ async def signUp(name: str, password: str):
 
 @app.post("/token")
 def authenticate_user(username: str, password: str):
+    EXPIRATION_TIME = timedelta(minutes=100000)
     sql = MenuSQL()
     user = sql.getUser(username)  # Получите пользователя из базы данных
     if not user:
@@ -124,8 +126,8 @@ def authenticate_user(username: str, password: str):
 
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
-    jwt_token = create_jwt_token({"sub": user.name})
-    return {"access_token": jwt_token, "token_type": "bearer"}
+    jwt_token = create_jwt_token({"sub": user.name},EXPIRATION_TIME=EXPIRATION_TIME)
+    return {"access_token": jwt_token, "token_type": "bearer", "expiration": EXPIRATION_TIME}
 
 
 @app.post("/cmsection")

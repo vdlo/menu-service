@@ -5,9 +5,9 @@ from fastapi import Depends
 
 SECRET_KEY = "13R2FMzNRSCXqg9zJCll"
 ALGORITHM = "HS256"
-EXPIRATION_TIME = timedelta(minutes=100000)
 
-def create_jwt_token(data: dict):
+
+def create_jwt_token(data: dict,EXPIRATION_TIME):
     expiration = datetime.utcnow() + EXPIRATION_TIME
     data.update({"exp": expiration})
     token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
