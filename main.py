@@ -16,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
 
 origins = ["*"]
-
+EXPIRATION_TIME = timedelta(seconds=5)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -41,6 +41,11 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 def get_user_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+@app.get("/admin/update_token")
+def get_user_me(userIn: User = Depends(get_current_user)):
+
+    jwt_token = create_jwt_token({"sub": userIn.name}, EXPIRATION_TIME=EXPIRATION_TIME)
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME}
 
 @app.get("/admin/getcompany")
 async def GetCompany(current_user: User = Depends(get_current_user)):
@@ -116,7 +121,6 @@ async def signUp(name: str, password: str):
 
 @app.post("/admin/token")
 def authenticate_user(userIn:User):
-    EXPIRATION_TIME = timedelta(seconds=5)
     sql = MenuSQL()
     user = sql.getUser(userIn.name)  # Получите пользователя из базы данных
     if not user:
