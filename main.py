@@ -116,7 +116,7 @@ async def signUp(name: str, password: str):
 
 @app.post("/admin/token")
 def authenticate_user(userIn:User):
-    EXPIRATION_TIME = timedelta(minutes=100000)
+    EXPIRATION_TIME = timedelta(seconds=5)
     sql = MenuSQL()
     user = sql.getUser(userIn.name)  # Получите пользователя из базы данных
     if not user:
