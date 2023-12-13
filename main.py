@@ -127,7 +127,7 @@ def authenticate_user(userIn:User):
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
     jwt_token = create_jwt_token({"sub": user.name},EXPIRATION_TIME=EXPIRATION_TIME)
-    return {"access_token": jwt_token, "token_type": "bearer", "date": datetime.now()+EXPIRATION_TIME}
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME}
 
 
 @app.post("/cmsection")
