@@ -45,8 +45,23 @@ def get_user_me(current_user: User = Depends(get_current_user)):
 def get_user_me(userIn: User = Depends(get_current_user)):
 
     jwt_token = create_jwt_token({"sub": userIn.name}, EXPIRATION_TIME=EXPIRATION_TIME)
-    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME, "update_time": datetime.now()+EXPIRATION_TIME-timedelta(seconds=10)}
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME, "update_time": datetime.now()+EXPIRATION_TIME-timedelta(seconds=10),
+            'company_id': userIn.companyId}
 
+@app.post("/admin/token")
+def authenticate_user(userIn:User):
+    sql = MenuSQL()
+    user = sql.getUser(userIn.name)  # Получите пользователя из базы данных
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    is_password_correct = pwd_context.verify(userIn.password, user.hash)
+
+    if not is_password_correct:
+        raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
+    jwt_token = create_jwt_token({"sub": user.name},EXPIRATION_TIME=EXPIRATION_TIME)
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME, "update_time": datetime.now()+EXPIRATION_TIME-timedelta(seconds=10),
+            'company_id': userIn.companyId}
 @app.get("/admin/getcompany")
 async def GetCompany(current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
@@ -119,19 +134,7 @@ async def signUp(name: str, password: str):
     return newUser
 
 
-@app.post("/admin/token")
-def authenticate_user(userIn:User):
-    sql = MenuSQL()
-    user = sql.getUser(userIn.name)  # Получите пользователя из базы данных
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    is_password_correct = pwd_context.verify(userIn.password, user.hash)
-
-    if not is_password_correct:
-        raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
-    jwt_token = create_jwt_token({"sub": user.name},EXPIRATION_TIME=EXPIRATION_TIME)
-    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME}
 
 
 @app.post("/cmsection")

@@ -152,7 +152,8 @@ class MenuSQL():
         result = []
         query = (
             "SELECT id as id,"
-            "name as title "
+            "name as title, "
+            "price as price"
             "FROM menudb.dishes "
             "where parentId=%s"
         )
