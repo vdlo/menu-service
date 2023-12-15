@@ -153,7 +153,7 @@ class MenuSQL():
         query = (
             "SELECT id as id,"
             "name as title, "
-            "price as price"
+            "IFNULL(price, 0) as price "
             "FROM menudb.dishes "
             "where parentId=%s"
         )
