@@ -59,14 +59,14 @@ class MenuSQL():
     def cmsection(self, section: Section):
         cursor = self.cnx.cursor(dictionary=True)
         query = (
-            "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, deactivate) "
-            "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(deactivate)s) "
+            "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, active) "
+            "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(active)s) "
             "ON DUPLICATE KEY UPDATE "
             "company_id = %(companyId)s,"
             "name = %(name)s,"
             "parent_id = %(parent_id)s,"
             "espeshial = %(espeshial)s,"
-            "deactivate = %(deactivate)s"
+            "active = %(active)s"
         )
         cursor.execute(query, section.model_dump(exclude=['subsections','dishes']))
         self.cnx.commit()
@@ -87,8 +87,8 @@ class MenuSQL():
     def cmDish(self, dish: Dish):
         cursor = self.cnx.cursor(dictionary=True)
         query = (
-            "INSERT INTO  menudb.dishes (id,name,mainImg,description,price,weight,isSpicy,parentId,companyId) "
-            "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, %(parentId)s, %(companyId)s ) "
+            "INSERT INTO  menudb.dishes (id,name,mainImg,description,price,weight,isSpicy,parentId,companyId,active) "
+            "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, %(parentId)s, %(companyId)s ), %(active)s "
             " ON DUPLICATE KEY UPDATE "
             " description = %(description)s,"
             " name = %(name)s,"
@@ -97,7 +97,8 @@ class MenuSQL():
             " weight = %(weight)s,"
             " isSpicy = %(isSpicy)s,"
             " parentId = %(parentId)s,"
-            " companyId = %(companyId)s "
+            " companyId = %(companyId)s ",
+            " active = %(active)s "
 
              )
         cursor.execute(query, dish.model_dump(exclude=['sliderImgs','ingredients','specialMarks']))
@@ -183,3 +184,25 @@ class MenuSQL():
         self.cnx.commit()
         result = self.getUser(user.name)
         return result
+    def set_section_activity(self, id,active):
+        cursor = self.cnx.cursor()
+        query = ('\n'
+                 '        UPDATE menudb.sections\n'
+                 '        SET\n'
+                 '        active = %(active)s\n'
+                 '        WHERE id = %(id)s\n'
+                 '        ')
+        cursor.execute(query, {'id':id,'active':active})
+        self.cnx.commit()
+
+
+    def set_dish_activity(self, id,active):
+        cursor = self.cnx.cursor()
+        query = ('\n'
+                 '        UPDATE menudb.dishes\n'
+                 '        SET\n'
+                 '        active = %(active)s\n'
+                 '        WHERE id = %(id)s\n'
+                 '        ')
+        cursor.execute(query, {'id': id, 'active': active})
+        self.cnx.commit()

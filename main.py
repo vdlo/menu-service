@@ -97,15 +97,21 @@ async def GetDishes(id: int, current_user: User = Depends(get_current_user)):
     return sql.getDish(id)
 
 @app.get("/admin/getdishtree")
-async def GetDishTree():
+async def GetDishTree(current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.getDishTree(1)
 
+@app.post("/admin/set_section_activity")
+async def set_section_activity(id, active, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.set_section_activity(id,active)
 
-
-
+@app.post("/admin/set_dish_activity")
+async def set_dish_activity(id, active, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.set_dish_activity(id, active)
 @app.post("/admin/uploadfile/")
-async def create_upload_file(file: UploadFile = File(...)):
+async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     file.filename = f"{uuid.uuid4()}.jpg"
     contents = await file.read()
 
@@ -134,17 +140,6 @@ async def signUp(name: str, password: str):
     return newUser
 
 
-
-
-
-@app.post("/cmsection")
-async def createModifySection(section: Section):
-    return Section
-
-
-@app.post("/cmsubsection")
-async def createModifySubsection(subsection: Subsection):
-    return subsection
 
 
 @app.get("/{name}")

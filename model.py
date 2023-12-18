@@ -28,7 +28,8 @@ class Dish(BaseModel):
     ingredients: List[str] = []
     specialMarks: List[str] = []
     isSpicy: int = 0
-    parentId:  int =0
+    parentId:  int = 0
+    active: bool = True
 
 class Subsection(BaseModel):
     companyId: int = 0
@@ -41,7 +42,7 @@ class Section(BaseModel):
     companyId: int = 0
     id: int = 0
     name: str
-    deactivate: bool = False
+    active: bool = True
     parent_id: int = None
     espeshial: bool = False
     subsections: List[Subsection] = []
