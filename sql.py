@@ -60,14 +60,13 @@ class MenuSQL():
         try:
             cursor = self.cnx.cursor(dictionary=True)
             query = (
-                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, active) "
-                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(active)s) "
+                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
+                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
                 "ON DUPLICATE KEY UPDATE "
                 "company_id = %(companyId)s,"
                 "name = %(name)s,"
                 "parent_id = %(parent_id)s,"
-                "espeshial = %(espeshial)s,"
-                "active = %(active)s"
+                "espeshial = %(espeshial)s"
             )
             cursor.execute(query, section.model_dump(exclude=['subsections','dishes']))
             self.cnx.commit()
