@@ -71,7 +71,7 @@ class MenuSQL():
             )
             cursor.execute(query, section.model_dump(exclude=['subsections','dishes']))
             self.cnx.commit()
-            result = self.getCompany(section.id)
+            result = 'ok'
             return result
         except Exception as e:
             return str(e)
