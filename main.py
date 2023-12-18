@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, Dict, List
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem
-from fastapi import FastAPI, HTTPException, Depends,File, UploadFile
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from pydantic import BaseModel
 from sql import MenuSQL
 from passlib.context import CryptContext
@@ -31,7 +31,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     if not decoded_data:
         raise HTTPException(status_code=400, detail="Invalid token")
     sql = MenuSQL()
-    user = sql.getUser(decoded_data["sub"])  # Получите пользователя из базы данных
+    user = sql.get_user(decoded_data["sub"])  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=400, detail="User not found")
     return user
@@ -41,17 +41,19 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 def get_user_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+
 @app.get("/admin/update_token")
 def get_user_me(userIn: User = Depends(get_current_user)):
-
     jwt_token = create_jwt_token({"sub": userIn.name}, EXPIRATION_TIME=EXPIRATION_TIME)
-    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME, "update_time": datetime.now()+EXPIRATION_TIME-timedelta(seconds=10),
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME,
+            "update_time": datetime.now() + EXPIRATION_TIME - timedelta(seconds=10),
             'company_id': userIn.companyId}
 
+
 @app.post("/admin/token")
-def authenticate_user(userIn:User):
+def authenticate_user(userIn: User):
     sql = MenuSQL()
-    user = sql.getUser(userIn.name)  # Получите пользователя из базы данных
+    user = sql.get_user(userIn.name)  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
@@ -59,58 +61,69 @@ def authenticate_user(userIn:User):
 
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
-    jwt_token = create_jwt_token({"sub": user.name},EXPIRATION_TIME=EXPIRATION_TIME)
-    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME, "update_time": datetime.now()+EXPIRATION_TIME-timedelta(seconds=10),
+    jwt_token = create_jwt_token({"sub": user.name}, EXPIRATION_TIME=EXPIRATION_TIME)
+    return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME,
+            "update_time": datetime.now() + EXPIRATION_TIME - timedelta(seconds=10),
             'company_id': userIn.companyId}
-@app.get("/admin/getcompany")
-async def GetCompany(current_user: User = Depends(get_current_user)):
+
+
+@app.get("/admin/get_company")  # "/admin/getcompany"
+async def get_company(current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.getCompany(current_user.companyId)
+    return sql.get_company(current_user.companyId)
 
 
-@app.post("/admin/cmcompany")
-async def createModifyCompany(company: Company, current_user: User = Depends(get_current_user)):
+@app.post("/admin/create_modify_company")  # "/admin/cmcompany"
+async def create_modify_company(company: Company, current_user: User = Depends(get_current_user)):
     if not company.id == current_user.companyId:
         raise HTTPException(status_code=400, detail="Incorrect user identification")
     sql = MenuSQL()
-    return sql.cmcompany(company)
+    return sql.create_modify_company(company)
 
 
-@app.post("/admin/cmsection")
-async def createModifySection(section_in: Section, current_user: User = Depends(get_current_user)):
+@app.post("/admin/create_modify_section")  # "/admin/cmsection"
+async def create_modify_section(section_in: Section, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.cmsection(section_in)
+    return sql.create_modify_section(section_in)
 
-@app.post("/admin/cmdish")
-async def createModifyDish(dish: Dish, current_user: User = Depends(get_current_user)):
-    sql = MenuSQL()
-    return sql.cmDish(dish)
 
-@app.get("/admin/getdishes")
-async def GetDishes(current_user: User = Depends(get_current_user)):
+@app.post("/admin/create_modify_dish")  # "/admin/cmdish"
+async def create_modify_dish(dish: Dish, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.getDishes(current_user.companyId)
+    return sql.create_modify_dish(dish)
 
-@app.get("/admin/getdish")
-async def GetDishes(id: int, current_user: User = Depends(get_current_user)):
-    sql = MenuSQL()
-    return sql.getDish(id)
 
-@app.get("/admin/getdishtree")
-async def GetDishTree(current_user: User = Depends(get_current_user)):
+@app.get("/admin/get_dishes")  # "/admin/getdishes"
+async def get_dishes(current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.getDishTree(1)
+    return sql.get_dishes(current_user.companyId)
+
+
+@app.get("/admin/get_dish")  # "/admin/getdish"
+async def get_dish(id: int, current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.get_dish(id)
+
+
+@app.get("/admin/get_dish_tree")  # "/admin/getdishtree"
+async def get_dish_tree(current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.get_dish_tree(1)
+
 
 @app.post("/admin/set_section_activity")
 async def set_section_activity(id, active, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.set_section_activity(id,active)
+    return sql.set_section_activity(id, active)
+
 
 @app.post("/admin/set_dish_activity")
 async def set_dish_activity(id, active, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.set_dish_activity(id, active)
-@app.post("/admin/uploadfile/")
+
+
+@app.post("/admin/upload_file/")  # "/admin/uploadfile/"
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     file.filename = f"{uuid.uuid4()}.jpg"
     contents = await file.read()
@@ -121,29 +134,19 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
 
     return {"filename": file.filename}
 
-@app.get("/")
-async def root():
-    sql = MenuSQL()
-    res = sql.getUser("admind")
-    # newUser=User(name='admin',hash="dfsfsdfsdfsdf")
-    # res=sql.newUser(newUser)
-    return res
 
-
-@app.post("/signup")
-async def signUp(name: str, password: str):
+@app.post("/sign_up")  # "/signup"
+async def sign_up(name: str, password: str):
     sql = MenuSQL()
-    if sql.getUser(name=name):
+    if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
-    newUser = sql.newUser(User(name=name, hash=hashed_password))
+    newUser = sql.new_user(User(name=name, hash=hashed_password))
     return newUser
 
 
-
-
 @app.get("/{name}")
-async def cetCompanyMenu(name: str) -> CompanyFullPackage:
+async def get_company_menu(name: str) -> CompanyFullPackage:
     company = Company()
     company.id = 1
     company.name = name
