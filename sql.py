@@ -88,20 +88,19 @@ class MenuSQL:
     def create_modify_dish(self, dish: Dish):
         cursor = self.cnx.cursor(dictionary=True)
         query = (
-            "INSERT INTO  menudb.dishes (id,name,mainImg,description,price,weight,isSpicy,parentId,companyId,active) "
+            "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active) "
             "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, "
-            "%(parentId)s, %(companyId)s ), %(active)s"
-            " ON DUPLICATE KEY UPDATE "
-            " description = %(description)s,"
-            " name = %(name)s,"
-            " mainImg = %(mainImg)s,"
-            " price = %(price)s,"
-            " weight = %(weight)s,"
-            " isSpicy = %(isSpicy)s,"
-            " parentId = %(parentId)s,"
-            " companyId = %(companyId)s ",
-            " active = %(active)s "
-
+            "%(parentId)s, %(companyId)s, %(active)s) "
+            "ON DUPLICATE KEY UPDATE "
+            "description = %(description)s, "
+            "name = %(name)s, "
+            "mainImg = %(mainImg)s, "
+            "price = %(price)s, "
+            "weight = %(weight)s, "
+            "isSpicy = %(isSpicy)s, "
+            "parentId = %(parentId)s, "
+            "companyId = %(companyId)s, "
+            "active = %(active)s"
         )
         cursor.execute(query, dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks']))
         self.cnx.commit()
