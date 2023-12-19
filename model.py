@@ -67,6 +67,7 @@ class HierarchyItem(BaseModel):
     title: str
     price: float = 0
     children: List = []
+    active: bool
 
 
 class Hierarchy(BaseModel):

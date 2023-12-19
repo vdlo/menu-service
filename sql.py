@@ -126,6 +126,7 @@ class MenuSQL:
             "SELECT `sections`.`id` as id,"
             "`sections`.`name` as title,"
             "`sections`.`parent_id`,"
+            "`sections`.`active`,"
             "`sections`.`espeshial`"
             "FROM `menudb`.`sections`"
             "where company_id=%s and (parent_id is null or parent_id=0)"
@@ -138,6 +139,7 @@ class MenuSQL:
                 "SELECT `sections`.`id` as id,"
                 "`sections`.`name` as title,"
                 "`sections`.`parent_id`,"
+                "`sections`.`active`,"
                 "`sections`.`espeshial`"
                 "FROM `menudb`.`sections`"
                 "where  parent_id =%s"
@@ -158,6 +160,7 @@ class MenuSQL:
         query = (
             "SELECT id as id,"
             "name as title, "
+            "active as active, "
             "IFNULL(price, 0) as price "
             "FROM menudb.dishes "
             "where parentId=%s"
