@@ -1,9 +1,7 @@
-
-
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
-from model import User, Company, Dish, Hierarchy, HierarchyItem, Section
+from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage
 
 config = {
     'user': 'admin',
@@ -191,24 +189,90 @@ class MenuSQL:
         result = self.get_user(user.name)
         return result
 
-    def set_section_activity(self, id, active):
+    def set_section_activity(self, id, active, company_id):
         cursor = self.cnx.cursor()
         query = ('\n'
                  '        UPDATE menudb.sections\n'
                  '        SET\n'
                  '        active = %(active)s\n'
                  '        WHERE id = %(id)s\n'
+                 '        and company_id = %(company_id)s\n'
                  '        ')
-        cursor.execute(query, {'id': id, 'active': active})
+        cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
         self.cnx.commit()
 
-    def set_dish_activity(self, id, active):
+    def set_dish_activity(self, id, active, company_id):
         cursor = self.cnx.cursor()
         query = ('\n'
                  '        UPDATE menudb.dishes\n'
                  '        SET\n'
                  '        active = %(active)s\n'
                  '        WHERE id = %(id)s\n'
+                 '        and companyId = %(company_id)s\n'
                  '        ')
-        cursor.execute(query, {'id': id, 'active': active})
+        cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
         self.cnx.commit()
+
+    def get_company_by_link(self, link: str):
+
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ('SELECT * FROM menudb.company\n'
+                 'where link = %s')
+        cursor.execute(query, [link])
+        gg = cursor.fetchone()
+        if not gg:
+            return False
+        result = Company(**gg)
+        return result
+
+    def get_company_data(self, link: str):
+        company_info = self.get_company_by_link(link)
+        if not company_info:
+            raise Exception('Company not found')
+
+        result = CompanyFullPackage(companyInfo=company_info)
+        result.menu = self.__get_sections(result.companyInfo.id)
+        for section in result.menu:
+            section.subsections = self.__get_subsections(section.id)
+            for subsection in section.subsections:
+                subsection.dishes = self.__get_dishes(subsection.id)
+
+        return result
+
+
+    def __get_sections(self, company_id):
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ('SELECT * FROM menudb.sections\n'
+                 'where ifnull(parent_id,0) = 0 \n'
+                 'and company_id = %s')
+        cursor.execute(query, [company_id])
+        fetch = cursor.fetchall()
+        result = []
+        for gg in fetch:
+            result.append(Section(**gg))
+
+        return result
+
+    def __get_subsections(self, parent_id):
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ('SELECT * FROM menudb.sections\n'
+                 'where ifnull(parent_id,0) =  %s')
+        cursor.execute(query, [parent_id])
+        fetch = cursor.fetchall()
+        result = []
+        for gg in fetch:
+            result.append(Section(**gg))
+
+        return result
+
+    def __get_dishes(self, parent_id):
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ('SELECT * FROM menudb.dishes\n'
+                 'where parentId = %s')
+        cursor.execute(query, [parent_id])
+        fetch = cursor.fetchall()
+        result = []
+        for gg in fetch:
+            result.append(Dish(**gg))
+
+        return result

@@ -1,6 +1,6 @@
 import uuid
-from typing import Optional, Dict, List
-from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem
+from typing import Optional, Dict, List, Type
+from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, ServiceResponce
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -69,58 +69,69 @@ def authenticate_user(userIn: User):
 
 @app.get("/admin/get_company")  # "/admin/getcompany"
 async def get_company(current_user: User = Depends(get_current_user)):
+
     sql = MenuSQL()
     return sql.get_company(current_user.companyId)
 
 
 @app.post("/admin/create_modify_company")  # "/admin/cmcompany"
 async def create_modify_company(company: Company, current_user: User = Depends(get_current_user)):
-    if not company.id == current_user.companyId:
-        raise HTTPException(status_code=400, detail="Incorrect user identification")
+
+    company.id = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_company(company)
 
 
 @app.post("/admin/create_modify_section")  # "/admin/cmsection"
 async def create_modify_section(section_in: Section, current_user: User = Depends(get_current_user)):
+
+    section_in.companyId = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_section(section_in)
 
 
 @app.post("/admin/create_modify_dish")  # "/admin/cmdish"
 async def create_modify_dish(dish: Dish, current_user: User = Depends(get_current_user)):
+
+    dish.companyId = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_dish(dish)
 
 
 @app.get("/admin/get_dishes")  # "/admin/getdishes"
 async def get_dishes(current_user: User = Depends(get_current_user)):
+
     sql = MenuSQL()
     return sql.get_dishes(current_user.companyId)
 
 
 @app.get("/admin/get_dish")  # "/admin/getdish"
 async def get_dish(id: int, current_user: User = Depends(get_current_user)):
+
     sql = MenuSQL()
-    return sql.get_dish(id)
+    dish = sql.get_dish(id)
+    if dish.companyId != current_user:
+        raise Exception(f'Your company haven\'t dish with id {id}')
+    return dish
 
 
 @app.get("/admin/get_dish_tree")  # "/admin/getdishtree"
 async def get_dish_tree(current_user: User = Depends(get_current_user)):
+
     sql = MenuSQL()
-    return sql.get_dish_tree(1)
+    return sql.get_dish_tree(current_user.companyId)
 
 
 @app.post("/admin/set_section_activity")
 async def set_section_activity(id, active, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.set_section_activity(id, active)
+    return sql.set_section_activity(id, active, current_user.companyId)
 
 
 @app.post("/admin/set_dish_activity")
 async def set_dish_activity(id, active, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.set_dish_activity(id, active)
+    return sql.set_dish_activity(id, active, current_user.companyId)
 
 
 @app.post("/admin/upload_file/")  # "/admin/uploadfile/"
@@ -141,64 +152,19 @@ async def sign_up(name: str, password: str):
     if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
-    newUser = sql.new_user(User(name=name, hash=hashed_password))
-    return newUser
+    new_user = sql.new_user(User(name=name, hash=hashed_password))
+    return new_user
 
 
-@app.get("/{name}")
-async def get_company_menu(name: str) -> CompanyFullPackage:
-    company = Company()
-    company.id = 1
-    company.name = name
-    company.title = "Simple title, base "
-    company.workingTime = {"Sunday": "10:00-22:00",
-                           "Monday": "10:00-22:00",
-                           "Tuesday": "10:00-22:00",
-                           "Wednesday": "10:00-22:00",
-                           "Thursday": "10:00-22:00",
-                           "Friday": "10:00-22:00",
-                           "Saturday": "10:00-22:00"}
-    company.address = "Radanovici, Черногория"
-    company.geoTag = "42.3487998848943, 18.767679742284034"
-    company.phone = "+38269877678"
-    company.instagram = "www.instagram.com/dfdfs"
-    dish = Dish(id=1, name="Meet", mainImg="some-link.jpg",
-                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                price=345, weight=13, )
-    fish = Dish(id=2, name="fish", mainImg="some-link.jpg",
-                description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                price=345, weight=13, )
-    drink = Dish(id=3, name="drink", mainImg="some-link.jpg",
-                 description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                 price=345, weight=13, )
-    speshial = Dish(id=4, name="especial", mainImg="some-link.jpg",
-                    description="Text about this dish. What the composition and blah dish. What the and blah blah blah",
-                    price=345, weight=13, )
-
-    food = Section(id=1, name="FOOD")
-    drinkSS = Section(id=2, name="DRINK")
-    Espesials = Section(id=3, name="ESPECIALS")
-    speshials = Subsection(id=8, name="Espeshials")
-    meet = Subsection(id=1, name="meet")
-    for i in range(10):
-        meet.dishes.append(dish)
-    fishS = Subsection(id=2, name="fish")
-    for i in range(10):
-        fishS.dishes.append(fish)
-    drinkS = Subsection(id=3, name="drink")
-    for i in range(10):
-        fishS.dishes.append(drink)
-    food.subsections.append(meet)
-    food.subsections.append(fishS)
-    drinkSS.subsections.append(drinkS)
-
-    for i in range(10):
-        speshials.dishes.append(speshial)
-    Espesials.subsections.append(speshials)
-
-    result = CompanyFullPackage(companyInfo=company)
-    result.menu.append(food)
-    result.menu.append(drinkSS)
-    result.menu.append(Espesials)
+@app.get("/{link}")
+async def get_company_data(link: str,) -> ServiceResponce:
+    result = ServiceResponce()
+    try:
+        sql_instance = MenuSQL()
+        result.data.append({'company_data': sql_instance.get_company_data(link)})
+    except Exception as e:
+        result.result = False
+        result.description = str(e)
 
     return result
+

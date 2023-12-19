@@ -28,8 +28,9 @@ class Dish(BaseModel):
     ingredients: List[str] = []
     specialMarks: List[str] = []
     isSpicy: int = 0
-    parentId:  int = 0
+    parentId: int = 0
     active: bool = True
+
 
 class Subsection(BaseModel):
     companyId: int = 0
@@ -69,4 +70,10 @@ class HierarchyItem(BaseModel):
 
 
 class Hierarchy(BaseModel):
-    dataTree : List[HierarchyItem] = []
+    dataTree: List[HierarchyItem] = []
+
+
+class ServiceResponce(BaseModel):
+    result: bool = True
+    description: str = ''
+    data: List = []
