@@ -232,10 +232,10 @@ async def webhook_front(
         # Собираем React-приложение (если это необходимо)
         subprocess.run(["npm", "run", "build"])
 
-        # Перезапускаем приложение (например, с использованием pm2)
-        subprocess.run(["pm2", "restart", "your-app-name"])
+        # Перезапускаем приложение через systemctl
+        subprocess.run(["sudo", "systemctl", "start", "menu_service_front"])
 
-        return {"status": "OK"}
+    return {"status": "OK"}
 
     raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
 
