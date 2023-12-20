@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional, Dict, List, Type
-from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, ServiceResponce
+from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
+    ServiceResponce, Payment
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -146,22 +147,37 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
     return {"filename": file.filename}
 
 
-@app.post("/sign_up")  # "/signup"
-async def sign_up(name: str, password: str):
+@app.post("/support/add_user")  # "/signup"
+async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
+    if not current_user.admin:
+        raise HTTPException(status_code=400, detail="Function only for administrators")
     sql = MenuSQL()
     if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
-    new_user = sql.new_user(User(name=name, hash=hashed_password))
+    new_user = sql.new_user(User(name=name, hash=hashed_password, companyId=company_id))
     return new_user
+
+@app.post("/support/add_payment")
+async def add_payment(payment: Payment, current_user: User = Depends(get_current_user)):
+    if not current_user.admin:
+        raise HTTPException(status_code=400, detail="Function only for administrators")
+    sql = MenuSQL()
+    sql.add_payment(current_user.name, payment)
+
 
 
 @app.get("/{link}")
 async def get_company_data(link: str,) -> ServiceResponce:
     result = ServiceResponce()
+
     try:
         sql_instance = MenuSQL()
-        result.data.append({'company_data': sql_instance.get_company_data(link)})
+        result.data['company_data'] = sql_instance.get_company_data(link)
+        if not sql_instance.check_payment_status(result.data['company_data'].companyInfo.id):
+            result.data.clear()
+            result.result = False
+            result.description = 'Company disabled'
     except Exception as e:
         result.result = False
         result.description = str(e)

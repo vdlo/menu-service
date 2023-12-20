@@ -1,7 +1,7 @@
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
-from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage
+from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment
 
 config = {
     'user': 'admin',
@@ -172,7 +172,7 @@ class MenuSQL:
 
     def get_user(self, name: str):
         cursor = self.cnx.cursor(dictionary=True)
-        query = ("SELECT name,hash,companyId from menudb.users "
+        query = ("SELECT name,hash,companyId, admin from menudb.users "
                  "where name=%s")
         cursor.execute(query, [name])
         gg = cursor.fetchone()
@@ -241,7 +241,6 @@ class MenuSQL:
 
         return result
 
-
     def __get_sections(self, company_id):
         cursor = self.cnx.cursor(dictionary=True)
         query = ('SELECT * FROM menudb.sections\n'
@@ -278,3 +277,30 @@ class MenuSQL:
             result.append(Dish(**gg))
 
         return result
+
+    def add_payment(self, user_name, payment: Payment):
+        payment_sum = payment.tariff * payment.months
+        expiration_date = datetime.now().date() + timedelta(days=payment.months * 30)
+
+        cursor = self.cnx.cursor()
+        query = ("INSERT INTO menudb.billing "
+                 "(companyId, payment, tariff, expiration_date, user_name) "
+                 "VALUES (%(companyId)s, %(payment)s, %(tariff)s, %(expiration_date)s, %(user_name)s)")
+        cursor.execute(query, {"companyId": payment.company_id, 'payment': payment_sum, 'tariff': payment.tariff,
+                               'expiration_date': expiration_date, 'user_name': user_name})
+        self.cnx.commit()
+
+    def check_payment_status(self, company_id):
+        cursor = self.cnx.cursor()
+        query = ("SELECT MAX(expiration_date) FROM menudb.billing "
+                 "WHERE companyId = %(companyId)s")
+        cursor.execute(query, {"companyId": company_id})
+        result = cursor.fetchone()
+
+        if result and result[0] is not None:
+            max_expiration_date = result[0].date()
+            current_date = datetime.now().date()
+            return current_date <= max_expiration_date
+        else:
+            # Возвращаем False, если запись не найдена или expiration_date равен None
+            return False

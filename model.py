@@ -60,6 +60,7 @@ class User(BaseModel):
     password: str = None
     hash: str = None
     companyId: int = 0
+    admin: bool = 0
 
 
 class HierarchyItem(BaseModel):
@@ -77,4 +78,10 @@ class Hierarchy(BaseModel):
 class ServiceResponce(BaseModel):
     result: bool = True
     description: str = ''
-    data: List = []
+    data: Dict = {}
+
+class Payment(BaseModel):
+    tariff: int
+    months: int
+    company_id: int
+    user_name: str = ''
