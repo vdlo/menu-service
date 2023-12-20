@@ -222,9 +222,6 @@ async def webhook_front(
         # Обновляем код из репозитория
         subprocess.run(["git", "pull", "origin", "master"])
 
-        # Устанавливаем зависимости npm
-        subprocess.run(["npm", "install"])
-
         # Перезапускаем приложение через systemctl
         subprocess.run(["sudo", "systemctl", "start", "menu_service_front.service"])
 
