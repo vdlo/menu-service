@@ -174,12 +174,18 @@ async def add_payment(payment: Payment, current_user: User = Depends(get_current
 
 
 @app.post("/support/webhook_back", include_in_schema=False)
-async def webhook_back(request: Request, X_Hub_Signature: str = Header(...)):
+async def webhook_back(
+    request: Request,
+    X_Hub_Signature: Optional[str] = Header(None),
+):
     data = await request.json()
     event = request.headers.get("X-GitHub-Event")
 
+    # Получаем данные тела запроса в формате bytes
+    payload = await request.body()
+
     # Проверяем подлинность запроса с использованием секрета
-    verify_webhook_signature(request.body(), X_Hub_Signature, GITHUB_WEBHOOK_SECRET_BACK)
+    verify_webhook_signature(payload, X_Hub_Signature, GITHUB_WEBHOOK_SECRET_BACK)
 
     if event == "push":
         # Переходим в рабочий каталог
@@ -202,8 +208,6 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str):
     # Сравниваем ожидаемую подпись с полученной от GitHub
     if not hmac.compare_digest(signature, expected_signature):
         raise HTTPException(status_code=400, detail="Invalid GitHub Webhook signature")
-
-
 @app.get("/{link}")
 async def get_company_data(link: str,) -> ServiceResponce:
     result = ServiceResponce()
