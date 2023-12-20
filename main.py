@@ -14,9 +14,10 @@ from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
-
+# back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
+# front
 GITHUB_WEBHOOK_SECRET_BACK = "back487318"
 GITHUB_WEBHOOK_SECRET_FRONT = "front487318"
 IMAGEDIR = "images/"
