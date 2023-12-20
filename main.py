@@ -192,9 +192,10 @@ async def webhook_back(
     if event == "push":
         # Переходим в рабочий каталог
         os.chdir(PROJECT_PATH_BACK)
-        print(os.path)
+        current_directory = os.getcwd()
+        print(f"Current Directory: {current_directory}")
         # Обновление вашего проекта при каждом push в репозиторий !
-        print(subprocess.run(["git", "pull", "origin", "master"]))
+        subprocess.run(["git", "pull", "origin", "master"])
 
         # Перезапуск службы
         subprocess.run(["sudo", "systemctl", "restart", "menu-back.service"])
