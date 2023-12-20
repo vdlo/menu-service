@@ -1,8 +1,12 @@
 import uuid
 from typing import Optional, Dict, List, Type
+import subprocess
+import os
+from hashlib import sha1
+import hmac
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
     ServiceResponce, Payment
-from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
 from passlib.context import CryptContext
@@ -11,6 +15,8 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
+PROJECT_PATH_BACK = "/opt/menu-service"
+GITHUB_WEBHOOK_SECRET_BACK = "back487318"
 IMAGEDIR = "images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
@@ -165,6 +171,36 @@ async def add_payment(payment: Payment, current_user: User = Depends(get_current
     sql = MenuSQL()
     sql.add_payment(current_user.name, payment)
 
+
+@app.post("/support/webhook_back", include_in_schema=False)
+async def webhook_back(request: Request, X_Hub_Signature: str = Header(...)):
+    data = await request.json()
+    event = request.headers.get("X-GitHub-Event")
+
+    # Проверяем подлинность запроса с использованием секрета
+    verify_webhook_signature(request.body(), X_Hub_Signature, GITHUB_WEBHOOK_SECRET_BACK)
+
+    if event == "push":
+        # Переходим в рабочий каталог
+        os.chdir(PROJECT_PATH_BACK)
+
+        # Обновление вашего проекта при каждом push в репозиторий
+        subprocess.run(["git", "pull", "origin", "master"])
+
+        # Перезапуск службы
+        subprocess.run(["sudo", "systemctl", "restart", "menu-back.service"])
+
+        return {"status": "OK"}
+
+    raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
+
+def verify_webhook_signature(payload: bytes, signature: str, secret: str):
+    # Получаем хеш HMAC-SHA1
+    expected_signature = "sha1=" + hmac.new(secret.encode(), payload, sha1).hexdigest()
+
+    # Сравниваем ожидаемую подпись с полученной от GitHub
+    if not hmac.compare_digest(signature, expected_signature):
+        raise HTTPException(status_code=400, detail="Invalid GitHub Webhook signature")
 
 
 @app.get("/{link}")
