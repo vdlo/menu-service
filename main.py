@@ -1,8 +1,9 @@
-# start
+import os
+
 import uuid
 from typing import Optional, Dict, List, Type
 import subprocess
-import os
+
 from hashlib import sha1
 import hmac
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
@@ -15,6 +16,7 @@ from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
+
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
@@ -80,14 +82,12 @@ def authenticate_user(userIn: User):
 
 @app.get("/admin/get_company")  # "/admin/getcompany"
 async def get_company(current_user: User = Depends(get_current_user)):
-
     sql = MenuSQL()
     return sql.get_company(current_user.companyId)
 
 
 @app.post("/admin/create_modify_company")  # "/admin/cmcompany"
 async def create_modify_company(company: Company, current_user: User = Depends(get_current_user)):
-
     company.id = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_company(company)
@@ -95,7 +95,6 @@ async def create_modify_company(company: Company, current_user: User = Depends(g
 
 @app.post("/admin/create_modify_section")  # "/admin/cmsection"
 async def create_modify_section(section_in: Section, current_user: User = Depends(get_current_user)):
-
     section_in.companyId = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_section(section_in)
@@ -103,7 +102,6 @@ async def create_modify_section(section_in: Section, current_user: User = Depend
 
 @app.post("/admin/create_modify_dish")  # "/admin/cmdish"
 async def create_modify_dish(dish: Dish, current_user: User = Depends(get_current_user)):
-
     dish.companyId = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_dish(dish)
@@ -111,14 +109,12 @@ async def create_modify_dish(dish: Dish, current_user: User = Depends(get_curren
 
 @app.get("/admin/get_dishes")  # "/admin/getdishes"
 async def get_dishes(current_user: User = Depends(get_current_user)):
-
     sql = MenuSQL()
     return sql.get_dishes(current_user.companyId)
 
 
 @app.get("/admin/get_dish")  # "/admin/getdish"
 async def get_dish(id: int, current_user: User = Depends(get_current_user)):
-
     sql = MenuSQL()
     dish = sql.get_dish(id)
     if dish.companyId != current_user:
@@ -128,7 +124,6 @@ async def get_dish(id: int, current_user: User = Depends(get_current_user)):
 
 @app.get("/admin/get_dish_tree")  # "/admin/getdishtree"
 async def get_dish_tree(current_user: User = Depends(get_current_user)):
-
     sql = MenuSQL()
     return sql.get_dish_tree(current_user.companyId)
 
@@ -168,6 +163,7 @@ async def sign_up(name: str, password: str, company_id: int = 0, current_user: U
     new_user = sql.new_user(User(name=name, hash=hashed_password, companyId=company_id))
     return new_user
 
+
 @app.post("/support/add_payment")
 async def add_payment(payment: Payment, current_user: User = Depends(get_current_user)):
     if not current_user.admin:
@@ -178,8 +174,8 @@ async def add_payment(payment: Payment, current_user: User = Depends(get_current
 
 @app.post("/support/webhook_back", include_in_schema=False)
 async def webhook_back(
-    request: Request,
-    X_Hub_Signature: Optional[str] = Header(None),
+        request: Request,
+        X_Hub_Signature: Optional[str] = Header(None),
 ):
     data = await request.json()
     event = request.headers.get("X-GitHub-Event")
@@ -205,10 +201,11 @@ async def webhook_back(
 
     raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
 
+
 @app.post("/support/webhook_front", include_in_schema=False)
 async def webhook_front(
-    request: Request,
-    X_Hub_Signature: Optional[str] = Header(None),
+        request: Request,
+        X_Hub_Signature: Optional[str] = Header(None),
 ):
     data = await request.json()
     event = request.headers.get("X-GitHub-Event")
@@ -229,15 +226,13 @@ async def webhook_front(
         # Устанавливаем зависимости npm
         subprocess.run(["npm", "install"])
 
-        # Собираем React-приложение (если это необходимо)
-        subprocess.run(["npm", "run", "build"])
-
         # Перезапускаем приложение через systemctl
         subprocess.run(["sudo", "systemctl", "start", "menu_service_front"])
 
     return {"status": "OK"}
 
     raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
+
 
 def verify_webhook_signature(payload: bytes, signature: str, secret: str):
     # Получаем хеш HMAC-SHA1
@@ -246,8 +241,10 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str):
     # Сравниваем ожидаемую подпись с полученной от GitHub
     if not hmac.compare_digest(signature, expected_signature):
         raise HTTPException(status_code=400, detail="Invalid GitHub Webhook signature")
+
+
 @app.get("/{link}")
-async def get_company_data(link: str,) -> ServiceResponce:
+async def get_company_data(link: str, ) -> ServiceResponce:
     result = ServiceResponce()
 
     try:
@@ -262,4 +259,3 @@ async def get_company_data(link: str,) -> ServiceResponce:
         result.description = str(e)
 
     return result
-
