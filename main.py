@@ -227,7 +227,7 @@ async def webhook_front(
         subprocess.run(["npm", "install"])
 
         # Перезапускаем приложение через systemctl
-        subprocess.run(["sudo", "systemctl", "start", "menu_service_front"])
+        subprocess.run(["sudo", "systemctl", "start", "menu_service_front.service"])
 
     return {"status": "OK"}
 
