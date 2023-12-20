@@ -205,6 +205,40 @@ async def webhook_back(
 
     raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
 
+@app.post("/support/webhook_front", include_in_schema=False)
+async def webhook_front(
+    request: Request,
+    X_Hub_Signature: Optional[str] = Header(None),
+):
+    data = await request.json()
+    event = request.headers.get("X-GitHub-Event")
+
+    payload = await request.body()
+
+    verify_webhook_signature(payload, X_Hub_Signature, GITHUB_WEBHOOK_SECRET_FRONT)
+
+    if event == "push":
+        # Переходим в рабочий каталог
+        os.chdir(PROJECT_PATH_FRONT)
+        current_directory = os.getcwd()
+        print(f"Current Directory: {current_directory}")
+
+        # Обновляем код из репозитория
+        subprocess.run(["git", "pull", "origin", "master"])
+
+        # Устанавливаем зависимости npm
+        subprocess.run(["npm", "install"])
+
+        # Собираем React-приложение (если это необходимо)
+        subprocess.run(["npm", "run", "build"])
+
+        # Перезапускаем приложение (например, с использованием pm2)
+        subprocess.run(["pm2", "restart", "your-app-name"])
+
+        return {"status": "OK"}
+
+    raise HTTPException(status_code=200, detail=f"Not a push event: {event}")
+
 def verify_webhook_signature(payload: bytes, signature: str, secret: str):
     # Получаем хеш HMAC-SHA1
     expected_signature = "sha1=" + hmac.new(secret.encode(), payload, sha1).hexdigest()
