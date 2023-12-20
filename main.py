@@ -193,7 +193,6 @@ async def webhook_back(
         print(f"Current Directory: {current_directory}")
         # Обновление вашего проекта при каждом push в репозиторий !!
         subprocess.run(["git", "pull", "origin", "master"])
-
         # Перезапуск службы
         subprocess.run(["sudo", "systemctl", "restart", "menu-back.service"])
 
