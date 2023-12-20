@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
 GITHUB_WEBHOOK_SECRET_BACK = "back487318"
+GITHUB_WEBHOOK_SECRET_FRONT = "front487318"
 IMAGEDIR = "images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
