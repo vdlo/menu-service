@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
 PROJECT_PATH_BACK = "/opt/menu-service"
+PROJECT_PATH_BACK = "/opt/menu-service_v1"
 GITHUB_WEBHOOK_SECRET_BACK = "back487318"
 IMAGEDIR = "images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
