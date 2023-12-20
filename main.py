@@ -193,7 +193,7 @@ async def webhook_back(
         # Переходим в рабочий каталог
         os.chdir(PROJECT_PATH_BACK)
         print(os.path)
-        # Обновление вашего проекта при каждом push в репозиторий
+        # Обновление вашего проекта при каждом push в репозиторий !
         print(subprocess.run(["git", "pull", "origin", "master"]))
 
         # Перезапуск службы
