@@ -16,6 +16,7 @@ from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
+from telegram_bot import send_message
 
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
@@ -74,6 +75,8 @@ def authenticate_user(userIn: User):
 
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
+    if user.admin:
+        send_message(f'Login by admin {user.name}')
     jwt_token = create_jwt_token({"sub": user.name}, EXPIRATION_TIME=EXPIRATION_TIME)
     return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME,
             "update_time": datetime.now() + EXPIRATION_TIME - timedelta(seconds=10),
@@ -222,8 +225,8 @@ async def webhook_front(
         # Обновляем код из репозитория
         subprocess.run(["git", "pull", "origin", "master"])
 
-        # Перезапускаем приложение через systemctl
-        subprocess.run(["sudo", "systemctl", "start", "menu_service_front.service"])
+         # Перезапускаем приложение через systemctl
+        subprocess.run(["sudo", "systemctl", "restart", "menu_service_front.service"])
 
     return {"status": "OK"}
 
