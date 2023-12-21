@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import Optional, Dict, List, Type
 import subprocess
+import asyncio
 
 from hashlib import sha1
 import hmac
@@ -16,8 +17,7 @@ from jwtA import create_jwt_token, verify_jwt_token
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
-from telegram_bot import send_message
-
+import telegram_bot as tg
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
@@ -46,6 +46,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=400, detail="Invalid token")
     sql = MenuSQL()
     user = sql.get_user(decoded_data["sub"])  # Получите пользователя из базы данных
+
     if not user:
         raise HTTPException(status_code=400, detail="User not found")
     return user
@@ -76,7 +77,7 @@ def authenticate_user(userIn: User):
     if not is_password_correct:
         raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
     if user.admin:
-        send_message(f'Login by admin {user.name}')
+        asyncio.run(tg.send_message(f'Login by administrator: username - {user.name}'))
     jwt_token = create_jwt_token({"sub": user.name}, EXPIRATION_TIME=EXPIRATION_TIME)
     return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME,
             "update_time": datetime.now() + EXPIRATION_TIME - timedelta(seconds=10),
