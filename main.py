@@ -145,13 +145,16 @@ async def set_dish_activity(id, active, current_user: User = Depends(get_current
     return sql.set_dish_activity(id, active, current_user.companyId)
 
 
-@app.post("/admin/upload_file/")  # "/admin/uploadfile/"
-async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+@app.post("/admin/upload_file/")
+async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[str, str]:
     file.filename = f"{uuid.uuid4()}.jpg"
     contents = await file.read()
 
-    # save the file
-    with open(f"{IMAGEDIR}{file.filename}", "wb") as f:
+    # Создайте каталог, если он не существует
+    os.makedirs(IMAGEDIR, exist_ok=True)
+
+    # Сохраните файл
+    with open(os.path.join(IMAGEDIR, file.filename), "wb") as f:
         f.write(contents)
 
     return {"filename": file.filename}
