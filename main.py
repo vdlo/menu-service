@@ -122,8 +122,8 @@ async def get_dish(id: int, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     dish = sql.get_dish(id)
    # return this function
-   # if dish.companyId != current_user.companyId:
-   #      raise HTTPException(status_code=400, detail=f'Your company haven\'t dish with id {id}')
+    if dish.companyId != current_user.companyId:
+        raise HTTPException(status_code=400, detail=f'Your company haven\'t dish with id {id}')
     return dish
 
 
