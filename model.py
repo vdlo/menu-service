@@ -14,6 +14,7 @@ class Company(BaseModel):
     instagram: Optional[str] = None
     faceBook: Optional[str] = None
     img: str = None
+    link: str = ''
 
 
 class Dish(BaseModel):
