@@ -43,18 +43,13 @@ app.add_middleware(
 def get_current_user(token: str = Depends(oauth2_scheme)):
     decoded_data = verify_jwt_token(token)
     if not decoded_data:
-        raise HTTPException(status_code=400, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
     sql = MenuSQL()
     user = sql.get_user(decoded_data["sub"])  # Получите пользователя из базы данных
 
     if not user:
-        raise HTTPException(status_code=400, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
     return user
-
-
-@app.get("/users/me")
-def get_user_me(current_user: User = Depends(get_current_user)):
-    return current_user
 
 
 @app.get("/admin/update_token")
@@ -66,22 +61,22 @@ def get_user_me(userIn: User = Depends(get_current_user)):
 
 
 @app.post("/admin/token")
-def authenticate_user(userIn: User):
+def authenticate_user(user_in: User):
     sql = MenuSQL()
-    user = sql.get_user(userIn.name)  # Получите пользователя из базы данных
+    user = sql.get_user(user_in.name)  # Получите пользователя из базы данных
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
 
-    is_password_correct = pwd_context.verify(userIn.password, user.hash)
+    is_password_correct = pwd_context.verify(user_in.password, user.hash)
 
     if not is_password_correct:
-        raise HTTPException(status_code=400, detail="Incorrect username or passwordd")
+        raise HTTPException(status_code=401, detail="Incorrect username or passwordd")
     if user.admin:
         asyncio.run(tg.send_message(f'Login by administrator: username - {user.name}'))
     jwt_token = create_jwt_token({"sub": user.name}, EXPIRATION_TIME=EXPIRATION_TIME)
     return {"access_token": jwt_token, "token_type": "bearer", "maxAge": EXPIRATION_TIME,
             "update_time": datetime.now() + EXPIRATION_TIME - timedelta(seconds=10),
-            'company_id': userIn.companyId}
+            'company_id': user_in.companyId}
 
 
 @app.get("/admin/get_company")  # "/admin/getcompany"
@@ -123,7 +118,7 @@ async def get_dish(id: int, current_user: User = Depends(get_current_user)):
     dish = sql.get_dish(id)
    # return this function
     if dish.companyId != current_user.companyId:
-        raise HTTPException(status_code=400, detail=f'Your company haven\'t dish with id {id}')
+        raise HTTPException(status_code=403, detail=f'Your company haven\'t dish with id {id}')
     return dish
 
 
@@ -147,17 +142,22 @@ async def set_dish_activity(id, active, current_user: User = Depends(get_current
 
 @app.post("/admin/upload_file/")
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[str, str]:
-    file.filename = f"{uuid.uuid4()}.jpg"
-    contents = await file.read()
+    try:
+        # Генерация нового имени файла
+        file.filename = f"{uuid.uuid4()}.jpg"
+        contents = await file.read()
 
-    # Создайте каталог, если он не существует
-    os.makedirs(IMAGEDIR, exist_ok=True)
+        # Создание каталога, если он не существует
+        os.makedirs(IMAGEDIR, exist_ok=True)
 
-    # Сохраните файл
-    with open(os.path.join(IMAGEDIR, file.filename), "wb") as f:
-        f.write(contents)
+        # Сохранение файла
+        with open(os.path.join(IMAGEDIR, file.filename), "wb") as f:
+            f.write(contents)
 
-    return {"filename": file.filename}
+        return {"filename": file.filename}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
 
 
 @app.post("/support/add_user")  # "/signup"

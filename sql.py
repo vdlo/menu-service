@@ -29,139 +29,151 @@ class MenuSQL:
 
         gg = cursor.fetchone()
         if not gg:
-            return gg
+            raise HTTPException(status_code=404, detail=f'Company not found')
         result = Company(**gg)
         return result
 
     def create_modify_company(self, company: Company):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = (
-            "INSERT INTO menudb.company (id, name, description, title, address, phone, geoTag, instagram, faceBook, "
-            "img)"
-            "VALUES (%(id)s, %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s, "
-            "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s) "
-            "ON DUPLICATE KEY UPDATE "
-            "name = %(name)s,"
-            "description = %(description)s,"
-            "title = %(title)s,"
-            "address = %(address)s,"
-            "phone = %(phone)s,"
-            "geoTag = %(geoTag)s,"
-            "instagram = %(instagram)s,"
-            "faceBook = %(faceBook)s,"
-            "img = %(img)s"
-        )
-        cursor.execute(query, company.model_dump(exclude=['workingTime']))
-        self.cnx.commit()
-        result = self.get_company(company.id)
-        return result
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "INSERT INTO menudb.company (id, name, description, title, address, phone, geoTag, instagram, faceBook, img) "
+                "VALUES (%(id)s, %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s, "
+                "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s) "
+                "ON DUPLICATE KEY UPDATE "
+                "name = %(name)s, "
+                "description = %(description)s, "
+                "title = %(title)s, "
+                "address = %(address)s, "
+                "phone = %(phone)s, "
+                "geoTag = %(geoTag)s, "
+                "instagram = %(instagram)s, "
+                "faceBook = %(faceBook)s, "
+                "img = %(img)s"
+            )
+            cursor.execute(query, company.model_dump(exclude=['workingTime']))
+            self.cnx.commit()
+
+            # Получаем обновленные данные компании
+            result = self.get_company(company.id)
+            return result
+
+        except Exception as e:
+            # Возвращаем информацию об ошибке
+            raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
 
     def create_modify_section(self, section: Section):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
 
-        cursor = self.cnx.cursor(dictionary=True)
+            # Проверка на существование секции с таким же наименованием и company_id
+            check_query = (
+                "SELECT id FROM menudb.sections "
+                "WHERE name = %(name)s AND company_id = %(companyId)s"
+            )
+            params = {'name': section.name, 'companyId': section.companyId}
 
-        # Проверка на существование секции с таким же наименованием и company_id
-        check_query = (
-            "SELECT id FROM menudb.sections "
-            "WHERE name = %(name)s AND company_id = %(companyId)s"
-        )
-        params = {'name': section.name, 'companyId': section.companyId}
+            # Если мы обновляем существующую секцию, исключаем её из проверки
+            if section.id:
+                check_query += " AND id <> %(id)s"
+                params['id'] = section.id
 
-        # Если мы обновляем существующую секцию, исключаем её из проверки
-        if section.id:
-            check_query += " AND id <> %(id)s"
-            params['id'] = section.id
+            cursor.execute(check_query, params)
+            if cursor.fetchone():
+                raise HTTPException(status_code=400, detail="Section name is busy")
 
-        cursor.execute(check_query, params)
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="section name is busy")
+            # Вставка или обновление секции
+            query = (
+                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
+                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
+                "ON DUPLICATE KEY UPDATE "
+                "company_id = %(companyId)s, "
+                "name = %(name)s, "
+                "parent_id = %(parent_id)s, "
+                "espeshial = %(espeshial)s"
+            )
+            cursor.execute(query, section.model_dump(exclude=['subsections', 'dishes']))
+            self.cnx.commit()
 
-        # Вставка или обновление секции
-        query = (
-            "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
-            "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
-            "ON DUPLICATE KEY UPDATE "
-            "company_id = %(companyId)s,"
-            "name = %(name)s,"
-            "parent_id = %(parent_id)s,"
-            "espeshial = %(espeshial)s"
-        )
-        cursor.execute(query, section.model_dump(exclude=['subsections', 'dishes']))
-        self.cnx.commit()
+            # Получение id секции после вставки/обновления
+            section_id = section.id if section.id else cursor.lastrowid
 
-        # Получение id секции после вставки/обновления
-        section_id = section.id if section.id else cursor.lastrowid
+            # Получение и возврат обновленных данных секции
+            fetch_query = "SELECT * FROM menudb.sections WHERE id = %s"
+            cursor.execute(fetch_query, (section_id,))
+            fetched_data = cursor.fetchone()
 
-        # Получение и возврат обновленных данных секции
-        fetch_query = "SELECT * FROM menudb.sections WHERE id = %s"
-        cursor.execute(fetch_query, (section_id,))
-        fetched_data = cursor.fetchone()
+            if fetched_data:
+                return Section(**fetched_data)
 
-        if fetched_data:
-            return Section(**fetched_data)
+            raise HTTPException(status_code=500, detail="Ошибка при создании или обновлении секции.")
 
-        return "Ошибка при создании или обновлении секции."
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=e.detail)
 
     def get_dishes(self, id):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ("SELECT * from menudb.dishes "
-                 "where company_id=%s")
-        cursor.execute(query, [id])
-        fetch = cursor.fetchall()
-        result = []
-        for gg in fetch:
-            result.append(Dish(**gg))
-        return result
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = "SELECT * FROM menudb.dishes WHERE company_id = %s"
+            cursor.execute(query, [id])
+            fetch = cursor.fetchall()
+
+            result = [Dish(**gg) for gg in fetch]
+            return result
+
+        except Exception as e:
+            # Обработка исключений, связанных с базой данных
+            raise HTTPException(status_code=500, detail=str(e))
 
     def create_modify_dish(self, dish: Dish):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = (
-            "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active) "
-            "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, "
-            "%(parentId)s, %(companyId)s, %(active)s) "
-            "ON DUPLICATE KEY UPDATE "
-            "description = %(description)s, "
-            "name = %(name)s, "
-            "mainImg = %(mainImg)s, "
-            "price = %(price)s, "
-            "weight = %(weight)s, "
-            "isSpicy = %(isSpicy)s, "
-            "parentId = %(parentId)s, "
-            "companyId = %(companyId)s, "
-            "active = %(active)s"
-        )
-        cursor.execute(query, dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks']))
-        self.cnx.commit()
-        result = self.get_dish(cursor.lastrowid)
-        return result
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active) "
+                "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, "
+                "%(parentId)s, %(companyId)s, %(active)s) "
+                "ON DUPLICATE KEY UPDATE "
+                "description = %(description)s, "
+                "name = %(name)s, "
+                "mainImg = %(mainImg)s, "
+                "price = %(price)s, "
+                "weight = %(weight)s, "
+                "isSpicy = %(isSpicy)s, "
+                "parentId = %(parentId)s, "
+                "companyId = %(companyId)s, "
+                "active = %(active)s"
+            )
+            cursor.execute(query, dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks']))
+            self.cnx.commit()
+
+            # Получение и возврат обновленных данных блюда
+            result = self.get_dish(cursor.lastrowid if not dish.id else dish.id)
+            return result
+
+        except Exception as e:
+            # Обработка исключений, связанных с базой данных
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_dish(self, id):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ("SELECT * FROM menudb.dishes "
-                 "where id=%s")
-        cursor.execute(query, [id])
-        gg = cursor.fetchone()
-        if not gg:
-            return gg
-        result = Dish(**gg)
-        return result
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = "SELECT * FROM menudb.dishes WHERE id = %s"
+            cursor.execute(query, [id])
+            dish_data = cursor.fetchone()
+
+            if not dish_data:
+                raise HTTPException(status_code=500, detail="Dish not found")
+
+            return Dish(**dish_data)
+
+        except Exception as e:
+            # Обработка исключений, связанных с базой данных
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_dish_tree(self, company_id):
-        cursor = self.cnx.cursor(dictionary=True)
-        result = Hierarchy()
-        query = (
-            "SELECT `sections`.`id` as id,"
-            "`sections`.`name` as title,"
-            "`sections`.`parent_id`,"
-            "`sections`.`active`,"
-            "`sections`.`espeshial`"
-            "FROM `menudb`.`sections`"
-            "where company_id=%s and (parent_id is null or parent_id=0)"
-        )
-        cursor.execute(query, [company_id])
-        fetch = cursor.fetchall()
-        for gg in fetch:
-            first_level_child = HierarchyItem(**gg)
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            result = Hierarchy()
             query = (
                 "SELECT `sections`.`id` as id,"
                 "`sections`.`name` as title,"
@@ -169,34 +181,46 @@ class MenuSQL:
                 "`sections`.`active`,"
                 "`sections`.`espeshial`"
                 "FROM `menudb`.`sections`"
-                "where  parent_id =%s"
+                "where company_id=%s and (parent_id is null or parent_id=0)"
             )
-            cursor.execute(query, [gg['id']])
-            fsub = cursor.fetchall()
-            for fs in fsub:
-                second_level_sub = HierarchyItem(**fs)
-                second_level_sub.children = self.get_hierarhy_childs(fs['id'])
-                first_level_child.children.append(second_level_sub)
-            result.dataTree.append(first_level_child)
+            cursor.execute(query, [company_id])
+            fetch = cursor.fetchall()
 
-        return result
+            for gg in fetch:
+                first_level_child = HierarchyItem(**gg)
+                first_level_child.children = self.get_hierarhy_childs(gg['id'])
+                result.dataTree.append(first_level_child)
 
-    def get_hierarhy_childs(self, id):
-        cursor = self.cnx.cursor(dictionary=True)
-        result = []
-        query = (
-            "SELECT id as id,"
-            "name as title, "
-            "active as active, "
-            "IFNULL(price, 0) as price "
-            "FROM menudb.dishes "
-            "where parentId=%s"
-        )
-        cursor.execute(query, [id])
-        fetch = cursor.fetchall()
-        for gg in fetch:
-            result.append(HierarchyItem(**gg))
-        return result
+            return result
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    def get_hierarhy_childs(self, parent_id):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            result = []
+            query = (
+                "SELECT `sections`.`id` as id,"
+                "`sections`.`name` as title,"
+                "`sections`.`parent_id`,"
+                "`sections`.`active`,"
+                "`sections`.`espeshial`"
+                "FROM `menudb`.`sections`"
+                "where parent_id=%s"
+            )
+            cursor.execute(query, [parent_id])
+            sections = cursor.fetchall()
+
+            for section in sections:
+                section_item = HierarchyItem(**section)
+                section_item.children = self.get_hierarhy_childs(section['id'])
+                result.append(section_item)
+
+            return result
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_user(self, name: str):
         cursor = self.cnx.cursor(dictionary=True)
@@ -220,28 +244,34 @@ class MenuSQL:
         return result
 
     def set_section_activity(self, id, active, company_id):
-        cursor = self.cnx.cursor()
-        query = ('\n'
-                 '        UPDATE menudb.sections\n'
-                 '        SET\n'
-                 '        active = %(active)s\n'
-                 '        WHERE id = %(id)s\n'
-                 '        and company_id = %(company_id)s\n'
-                 '        ')
-        cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
-        self.cnx.commit()
+        try:
+            cursor = self.cnx.cursor()
+            query = (
+                "UPDATE menudb.sections "
+                "SET active = %(active)s "
+                "WHERE id = %(id)s "
+                "AND company_id = %(company_id)s"
+            )
+            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
+            self.cnx.commit()
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     def set_dish_activity(self, id, active, company_id):
-        cursor = self.cnx.cursor()
-        query = ('\n'
-                 '        UPDATE menudb.dishes\n'
-                 '        SET\n'
-                 '        active = %(active)s\n'
-                 '        WHERE id = %(id)s\n'
-                 '        and companyId = %(company_id)s\n'
-                 '        ')
-        cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
-        self.cnx.commit()
+        try:
+            cursor = self.cnx.cursor()
+            query = (
+                "UPDATE menudb.dishes "
+                "SET active = %(active)s "
+                "WHERE id = %(id)s "
+                "AND companyId = %(company_id)s"
+            )
+            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
+            self.cnx.commit()
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_company_by_link(self, link: str):
 
@@ -331,7 +361,7 @@ class MenuSQL:
             self.cnx.commit()
 
         except mysql.connector.Error as err:
-            raise Exception(str(err))
+            raise HTTPException(status_code=500, detail=str(err))
         finally:
             cursor.close()
 
