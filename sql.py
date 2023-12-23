@@ -1,6 +1,7 @@
 import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
+from fastapi import HTTPException
 from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment
 
 config = {
@@ -56,23 +57,50 @@ class MenuSQL:
         return result
 
     def create_modify_section(self, section: Section):
-        try:
-            cursor = self.cnx.cursor(dictionary=True)
-            query = (
-                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
-                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
-                "ON DUPLICATE KEY UPDATE "
-                "company_id = %(companyId)s,"
-                "name = %(name)s,"
-                "parent_id = %(parent_id)s,"
-                "espeshial = %(espeshial)s"
-            )
-            cursor.execute(query, section.model_dump(exclude=['subsections', 'dishes']))
-            self.cnx.commit()
-            result = 'ok'
-            return result
-        except Exception as e:
-            return str(e)
+
+        cursor = self.cnx.cursor(dictionary=True)
+
+        # Проверка на существование секции с таким же наименованием и company_id
+        check_query = (
+            "SELECT id FROM menudb.sections "
+            "WHERE name = %(name)s AND company_id = %(companyId)s"
+        )
+        params = {'name': section.name, 'companyId': section.companyId}
+
+        # Если мы обновляем существующую секцию, исключаем её из проверки
+        if section.id:
+            check_query += " AND id <> %(id)s"
+            params['id'] = section.id
+
+        cursor.execute(check_query, params)
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="section name is busy")
+
+        # Вставка или обновление секции
+        query = (
+            "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
+            "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
+            "ON DUPLICATE KEY UPDATE "
+            "company_id = %(companyId)s,"
+            "name = %(name)s,"
+            "parent_id = %(parent_id)s,"
+            "espeshial = %(espeshial)s"
+        )
+        cursor.execute(query, section.model_dump(exclude=['subsections', 'dishes']))
+        self.cnx.commit()
+
+        # Получение id секции после вставки/обновления
+        section_id = section.id if section.id else cursor.lastrowid
+
+        # Получение и возврат обновленных данных секции
+        fetch_query = "SELECT * FROM menudb.sections WHERE id = %s"
+        cursor.execute(fetch_query, (section_id,))
+        fetched_data = cursor.fetchone()
+
+        if fetched_data:
+            return Section(**fetched_data)
+
+        return "Ошибка при создании или обновлении секции."
 
     def get_dishes(self, id):
         cursor = self.cnx.cursor(dictionary=True)
