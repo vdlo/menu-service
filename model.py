@@ -31,6 +31,7 @@ class Dish(BaseModel):
     isSpicy: int = 0
     parentId: int = 0
     active: bool = True
+    sort:int = 0
 
 
 class Subsection(BaseModel):
@@ -49,6 +50,7 @@ class Section(BaseModel):
     espeshial: bool = False
     subsections: List[Subsection] = []
     dishes: List[Dish] = []
+    sort: int =0
 
 
 class CompanyFullPackage(BaseModel):
@@ -70,6 +72,7 @@ class HierarchyItem(BaseModel):
     price: float = 0
     children: List = []
     active: bool
+    sort: int
 
 
 class Hierarchy(BaseModel):
@@ -86,3 +89,7 @@ class Payment(BaseModel):
     months: int
     company_id: int
     user_name: str = ''
+
+class SortingPacket(BaseModel):
+    id: int
+    direction: int

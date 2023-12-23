@@ -2,7 +2,7 @@ import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
 from fastapi import HTTPException
-from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment
+from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket
 
 config = {
     'user': 'admin',
@@ -73,7 +73,6 @@ class MenuSQL:
             )
             params = {'name': section.name, 'companyId': section.companyId}
 
-            # Если мы обновляем существующую секцию, исключаем её из проверки
             if section.id:
                 check_query += " AND id <> %(id)s"
                 params['id'] = section.id
@@ -82,24 +81,31 @@ class MenuSQL:
             if cursor.fetchone():
                 raise HTTPException(status_code=400, detail="Section name is busy")
 
+            # Определение максимального значения sort
+            cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.sections WHERE company_id = %(companyId)s",
+                           {'companyId': section.companyId})
+            max_sort_result = cursor.fetchone()
+            next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+
             # Вставка или обновление секции
+            section_data = section.dict()
+            section_data['sort'] = next_sort  # Установка значения для sort
             query = (
-                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial) "
-                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s) "
+                "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, sort) "
+                "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(sort)s) "
                 "ON DUPLICATE KEY UPDATE "
                 "company_id = %(companyId)s, "
                 "name = %(name)s, "
                 "parent_id = %(parent_id)s, "
-                "espeshial = %(espeshial)s"
+                "espeshial = %(espeshial)s, "
+                "sort = %(sort)s"
             )
-            cursor.execute(query, section.model_dump(exclude=['subsections', 'dishes']))
+            cursor.execute(query, section_data)
             self.cnx.commit()
-
-            # Получение id секции после вставки/обновления
-            section_id = section.id if section.id else cursor.lastrowid
 
             # Получение и возврат обновленных данных секции
             fetch_query = "SELECT * FROM menudb.sections WHERE id = %s"
+            section_id = section.id if section.id else cursor.lastrowid
             cursor.execute(fetch_query, (section_id,))
             fetched_data = cursor.fetchone()
 
@@ -107,9 +113,10 @@ class MenuSQL:
                 return Section(**fetched_data)
 
             raise HTTPException(status_code=500, detail="Ошибка при создании или обновлении секции.")
-        except HTTPException:
-            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
-            raise
+
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -132,10 +139,19 @@ class MenuSQL:
     def create_modify_dish(self, dish: Dish):
         try:
             cursor = self.cnx.cursor(dictionary=True)
+
+            # Определение максимального значения sort
+            cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.dishes WHERE parentId = %s", (dish.parentId,))
+            max_sort_result = cursor.fetchone()
+            next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+
+            # Вставка или обновление блюда
+            dish_data = dish.dict()
+            dish_data['sort'] = next_sort  # Установка значения для sort
             query = (
-                "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active) "
+                "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active, sort) "
                 "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, "
-                "%(parentId)s, %(companyId)s, %(active)s) "
+                "%(parentId)s, %(companyId)s, %(active)s, %(sort)s) "
                 "ON DUPLICATE KEY UPDATE "
                 "description = %(description)s, "
                 "name = %(name)s, "
@@ -145,19 +161,20 @@ class MenuSQL:
                 "isSpicy = %(isSpicy)s, "
                 "parentId = %(parentId)s, "
                 "companyId = %(companyId)s, "
-                "active = %(active)s"
+                "active = %(active)s, "
+                "sort = %(sort)s"
             )
-            cursor.execute(query, dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks']))
+            cursor.execute(query, dish_data)
             self.cnx.commit()
 
             # Получение и возврат обновленных данных блюда
             result = self.get_dish(cursor.lastrowid if not dish.id else dish.id)
             return result
-        except HTTPException:
-            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
-            raise
+
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
-            # Обработка исключений, связанных с базой данных
             raise HTTPException(status_code=500, detail=str(e))
 
     def get_dish(self, id):
@@ -187,9 +204,11 @@ class MenuSQL:
                 "`sections`.`name` as title,"
                 "`sections`.`parent_id`,"
                 "`sections`.`active`,"
+                "`sections`.`sort`,"
                 "`sections`.`espeshial`"
                 "FROM `menudb`.`sections`"
-                "where company_id=%s and (parent_id is null or parent_id=0)"
+                "where company_id=%s and (parent_id is null or parent_id=0) "
+                "ORDER BY sort ASC "
             )
             cursor.execute(query, [company_id])
             fetch = cursor.fetchall()
@@ -201,9 +220,11 @@ class MenuSQL:
                     "`sections`.`name` as title,"
                     "`sections`.`parent_id`,"
                     "`sections`.`active`,"
+                    "`sections`.`sort`,"
                     "`sections`.`espeshial`"
                     "FROM `menudb`.`sections`"
-                    "where  parent_id =%s"
+                    "where  parent_id =%s "
+                    "ORDER BY sort ASC "
                 )
                 cursor.execute(query, [gg['id']])
                 fsub = cursor.fetchall()
@@ -228,9 +249,11 @@ class MenuSQL:
                 "SELECT id as id,"
                 "name as title, "
                 "active as active, "
+                "sort as sort, "
                 "IFNULL(price, 0) as price "
                 "FROM menudb.dishes "
-                "where parentId=%s"
+                "where parentId=%s "
+                "ORDER BY sort ASC "
             )
             cursor.execute(query, [parent_id])
             fetch = cursor.fetchall()
@@ -326,41 +349,73 @@ class MenuSQL:
         return result
 
     def __get_sections(self, company_id):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ('SELECT * FROM menudb.sections\n'
-                 'where ifnull(parent_id,0) = 0 \n'
-                 'and company_id = %s')
-        cursor.execute(query, [company_id])
-        fetch = cursor.fetchall()
-        result = []
-        for gg in fetch:
-            result.append(Section(**gg))
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "SELECT id, company_id, name, parent_id, espeshial, active, sort "
+                "FROM menudb.sections "
+                "WHERE ifnull(parent_id, 0) = 0 AND company_id = %s "
+                "ORDER BY sort"
+            )
+            cursor.execute(query, [company_id])
+            fetch = cursor.fetchall()
 
-        return result
+            result = []
+            for gg in fetch:
+                result.append(Section(**gg))
+
+            return result
+
+        except Exception as e:
+            # В случае возникновения ошибки, вы можете обработать ее здесь
+            print("Произошла ошибка при получении секций:", e)
+            return []
 
     def __get_subsections(self, parent_id):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ('SELECT * FROM menudb.sections\n'
-                 'where ifnull(parent_id,0) =  %s')
-        cursor.execute(query, [parent_id])
-        fetch = cursor.fetchall()
-        result = []
-        for gg in fetch:
-            result.append(Section(**gg))
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "SELECT id, company_id, name, parent_id, espeshial, active, sort "
+                "FROM menudb.sections "
+                "WHERE ifnull(parent_id, 0) = %s "
+                "ORDER BY sort"
+            )
+            cursor.execute(query, [parent_id])
+            fetch = cursor.fetchall()
 
-        return result
+            result = []
+            for gg in fetch:
+                result.append(Section(**gg))
+
+            return result
+
+        except Exception as e:
+            # В случае возникновения ошибки, вы можете обработать ее здесь
+            print("Произошла ошибка при получении подсекций:", e)
+            return []
 
     def __get_dishes(self, parent_id):
-        cursor = self.cnx.cursor(dictionary=True)
-        query = ('SELECT * FROM menudb.dishes\n'
-                 'where parentId = %s')
-        cursor.execute(query, [parent_id])
-        fetch = cursor.fetchall()
-        result = []
-        for gg in fetch:
-            result.append(Dish(**gg))
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "SELECT id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active, sort "
+                "FROM menudb.dishes "
+                "WHERE parentId = %s "
+                "ORDER BY sort"
+            )
+            cursor.execute(query, [parent_id])
+            fetch = cursor.fetchall()
 
-        return result
+            result = []
+            for gg in fetch:
+                result.append(Dish(**gg))
+
+            return result
+
+        except Exception as e:
+            # В случае возникновения ошибки, вы можете обработать ее здесь
+            print("Произошла ошибка при получении блюд:", e)
+            return []
 
     def add_payment(self, user_name, payment):
         try:
@@ -405,3 +460,130 @@ class MenuSQL:
         else:
             # Возвращаем False, если запись не найдена или expiration_date равен None
             return False
+
+    def update_dish_sort(self, element: SortingPacket):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+
+            # Получаем текущие данные элемента
+            cursor.execute("SELECT sort, parent_id FROM menudb.dishes WHERE id = %s", (element.id,))
+            current = cursor.fetchone()
+
+            if not current:
+                raise HTTPException(status_code=404, detail="Элемент не найден")
+
+            current_sort, parent_id = current['sort'], current['parent_id']
+
+            # Определяем направление сортировки и ищем соседний элемент
+            if element.direction > 0:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.dishes
+                    WHERE parent_id = %s AND sort > %s
+                    ORDER BY sort ASC LIMIT 1
+                """, (parent_id, current_sort))
+            else:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.dishes
+                    WHERE parent_id = %s AND sort < %s
+                    ORDER BY sort DESC LIMIT 1
+                """, (parent_id, current_sort))
+
+            neighbor = cursor.fetchone()
+
+            if not neighbor:
+                raise HTTPException(status_code=404, detail="Соседний элемент не найден")
+
+            # Меняем местами значения sort
+            cursor.execute("UPDATE menudb.dishes SET sort = %s WHERE id = %s", (neighbor['sort'], element.id))
+            cursor.execute("UPDATE menudb.dishes SET sort = %s WHERE id = %s", (current_sort, neighbor['id']))
+
+            self.cnx.commit()
+
+        except HTTPException as http_exc:
+            # Передаем HTTPException дальше
+            raise http_exc
+
+        except Exception as e:
+            # Любые другие исключения обрабатываем здесь
+            raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+
+    def update_section_sort(self, element: SortingPacket):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+
+            # Получаем текущие данные элемента
+            cursor.execute("SELECT sort, parent_id FROM menudb.sections WHERE id = %s", (element.id,))
+            current = cursor.fetchone()
+
+            if not current:
+                raise HTTPException(status_code=404, detail="Секция не найдена")
+
+            current_sort, parent_id = current['sort'], current['parent_id']
+
+            # Определяем направление сортировки и ищем соседний элемент
+            if element.direction > 0:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.sections
+                    WHERE parent_id = %s AND sort > %s
+                    ORDER BY sort ASC LIMIT 1
+                """, (parent_id, current_sort))
+            else:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.sections
+                    WHERE parent_id = %s AND sort < %s
+                    ORDER BY sort DESC LIMIT 1
+                """, (parent_id, current_sort))
+
+            neighbor = cursor.fetchone()
+
+            if not neighbor:
+                raise HTTPException(status_code=404, detail="Соседняя секция не найдена")
+
+            # Меняем местами значения sort
+            cursor.execute("UPDATE menudb.sections SET sort = %s WHERE id = %s", (neighbor['sort'], element.id))
+            cursor.execute("UPDATE menudb.sections SET sort = %s WHERE id = %s", (current_sort, neighbor['id']))
+
+            self.cnx.commit()
+
+        except HTTPException as http_exc:
+            # Передаем HTTPException дальше
+            raise http_exc
+
+        except Exception as e:
+            # Любые другие исключения обрабатываем здесь
+            raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+    def fill_sort_order(self):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+
+            # Запросы и обработка для dishes
+            cursor.execute("SELECT id, parentId FROM menudb.dishes ORDER BY parentId, id")
+            dishes = cursor.fetchall()
+            self._update_sort_order(cursor, dishes, 'dishes', 'parentId')
+
+            # Запросы и обработка для sections
+            cursor.execute("SELECT id, parent_id FROM menudb.sections ORDER BY parent_id, id")
+            sections = cursor.fetchall()
+            self._update_sort_order(cursor, sections, 'sections', 'parent_id')
+
+            self.cnx.commit()
+
+        except Exception as e:
+            self.cnx.rollback()
+            raise e
+
+    def _update_sort_order(self, cursor, records, table_name, parent_field_name):
+        sort_order = 0
+        current_parent_id = None
+
+        for record in records:
+            # Убедитесь, что record является словарем
+            if record[parent_field_name] != current_parent_id:
+                sort_order = 1
+                current_parent_id = record[parent_field_name]
+            else:
+                sort_order += 1
+
+            cursor.execute(f"UPDATE menudb.{table_name} SET sort = %s WHERE id = %s", (sort_order, record['id']))

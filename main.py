@@ -8,7 +8,7 @@ import asyncio
 from hashlib import sha1
 import hmac
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment
+    ServiceResponce, Payment, SortingPacket
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -139,6 +139,15 @@ async def set_dish_activity(id, active, current_user: User = Depends(get_current
     sql = MenuSQL()
     return sql.set_dish_activity(id, active, current_user.companyId)
 
+@app.post("/admin/update_dish_sort")
+async def update_dish_sort(element: SortingPacket):
+    sql = MenuSQL()
+    return sql.update_dish_sort(element)
+
+@app.post("/admin/update_section_sort")
+async def update_dish_sort(element: SortingPacket):
+    sql = MenuSQL()
+    return sql.update_section_sort(element)
 
 @app.post("/admin/upload_file/")
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[str, str]:
@@ -248,17 +257,17 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str):
 
 
 @app.get("/{link}")
-async def get_company_data(link: str, ) -> ServiceResponce:
-    result = ServiceResponce()
+async def get_company_data(link: str, ):
+
 
     try:
         sql_instance = MenuSQL()
-        return sql_instance.get_company_data(link)
-
+        result = sql_instance.get_company_data(link)
+        return result
     except HTTPException:
         # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return result
+
