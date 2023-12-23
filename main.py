@@ -140,12 +140,12 @@ async def set_dish_activity(id, active, current_user: User = Depends(get_current
     return sql.set_dish_activity(id, active, current_user.companyId)
 
 @app.post("/admin/update_dish_sort")
-async def update_dish_sort(element: SortingPacket):
+async def update_dish_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.update_dish_sort(element)
 
-@app.post("/admin/update_section_sort")
-async def update_dish_sort(element: SortingPacket):
+@app.post("/admin/update_section_sort",)
+async def update_dish_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.update_section_sort(element)
 
