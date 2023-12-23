@@ -196,7 +196,21 @@ class MenuSQL:
 
             for gg in fetch:
                 first_level_child = HierarchyItem(**gg)
-                first_level_child.children = self.get_hierarhy_childs(gg['id'])
+                query = (
+                    "SELECT `sections`.`id` as id,"
+                    "`sections`.`name` as title,"
+                    "`sections`.`parent_id`,"
+                    "`sections`.`active`,"
+                    "`sections`.`espeshial`"
+                    "FROM `menudb`.`sections`"
+                    "where  parent_id =%s"
+                )
+                cursor.execute(query, [gg['id']])
+                fsub = cursor.fetchall()
+                for fs in fsub:
+                    second_level_sub = HierarchyItem(**fs)
+                    second_level_sub.children = self.get_hierarhy_childs(fs['id'])
+                    first_level_child.children.append(second_level_sub)
                 result.dataTree.append(first_level_child)
 
             return result
@@ -211,23 +225,19 @@ class MenuSQL:
             cursor = self.cnx.cursor(dictionary=True)
             result = []
             query = (
-                "SELECT `sections`.`id` as id,"
-                "`sections`.`name` as title,"
-                "`sections`.`parent_id`,"
-                "`sections`.`active`,"
-                "`sections`.`espeshial`"
-                "FROM `menudb`.`sections`"
-                "where parent_id=%s"
+                "SELECT id as id,"
+                "name as title, "
+                "active as active, "
+                "IFNULL(price, 0) as price "
+                "FROM menudb.dishes "
+                "where parentId=%s"
             )
             cursor.execute(query, [parent_id])
-            sections = cursor.fetchall()
-
-            for section in sections:
-                section_item = HierarchyItem(**section)
-                section_item.children = self.get_hierarhy_childs(section['id'])
-                result.append(section_item)
-
+            fetch = cursor.fetchall()
+            for gg in fetch:
+                result.append(HierarchyItem(**gg))
             return result
+
         except HTTPException:
             # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
             raise
