@@ -107,9 +107,11 @@ class MenuSQL:
                 return Section(**fetched_data)
 
             raise HTTPException(status_code=500, detail="Ошибка при создании или обновлении секции.")
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=e.detail)
+            raise HTTPException(status_code=500, detail=str(e))
 
     def get_dishes(self, id):
         try:
@@ -120,7 +122,9 @@ class MenuSQL:
 
             result = [Dish(**gg) for gg in fetch]
             return result
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             # Обработка исключений, связанных с базой данных
             raise HTTPException(status_code=500, detail=str(e))
@@ -149,7 +153,9 @@ class MenuSQL:
             # Получение и возврат обновленных данных блюда
             result = self.get_dish(cursor.lastrowid if not dish.id else dish.id)
             return result
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             # Обработка исключений, связанных с базой данных
             raise HTTPException(status_code=500, detail=str(e))
@@ -165,7 +171,9 @@ class MenuSQL:
                 raise HTTPException(status_code=500, detail="Dish not found")
 
             return Dish(**dish_data)
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             # Обработка исключений, связанных с базой данных
             raise HTTPException(status_code=500, detail=str(e))
@@ -192,7 +200,9 @@ class MenuSQL:
                 result.dataTree.append(first_level_child)
 
             return result
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -218,7 +228,9 @@ class MenuSQL:
                 result.append(section_item)
 
             return result
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -254,7 +266,9 @@ class MenuSQL:
             )
             cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
             self.cnx.commit()
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -269,7 +283,9 @@ class MenuSQL:
             )
             cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
             self.cnx.commit()
-
+        except HTTPException:
+            # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
