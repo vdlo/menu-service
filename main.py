@@ -253,13 +253,12 @@ async def get_company_data(link: str, ) -> ServiceResponce:
 
     try:
         sql_instance = MenuSQL()
-        result.data['company_data'] = sql_instance.get_company_data(link)
-        if not sql_instance.check_payment_status(result.data['company_data'].companyInfo.id):
-            result.data.clear()
-            result.result = False
-            result.description = 'Company disabled'
+        return sql_instance.get_company_data(link)
+
+    except HTTPException:
+        # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
+        raise
     except Exception as e:
-        result.result = False
-        result.description = str(e)
+        raise HTTPException(status_code=500, detail=str(e))
 
     return result
