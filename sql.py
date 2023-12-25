@@ -80,16 +80,17 @@ class MenuSQL:
             cursor.execute(check_query, params)
             if cursor.fetchone():
                 raise HTTPException(status_code=400, detail="Section name is busy")
-
+            section_data = section.model_dump(exclude=['subsections', 'dishes'])
+            if not section.id:
             # Определение максимального значения sort
-            cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.sections WHERE company_id = %(companyId)s",
-                           {'companyId': section.companyId})
-            max_sort_result = cursor.fetchone()
-            next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+                cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.sections WHERE company_id = %(companyId)s",
+                               {'companyId': section.companyId})
+                max_sort_result = cursor.fetchone()
+                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
 
             # Вставка или обновление секции
-            section_data = section.dict()
-            section_data['sort'] = next_sort  # Установка значения для sort
+
+                section_data['sort'] = next_sort  # Установка значения для sort
             query = (
                 "INSERT INTO menudb.sections (id, company_id, name, parent_id, espeshial, sort) "
                 "VALUES (%(id)s, %(companyId)s, %(name)s, %(parent_id)s, %(espeshial)s, %(sort)s) "
