@@ -142,13 +142,15 @@ class MenuSQL:
             cursor = self.cnx.cursor(dictionary=True)
 
             # Определение максимального значения sort
-            cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.dishes WHERE parentId = %s", (dish.parentId,))
-            max_sort_result = cursor.fetchone()
-            next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+            dish_data = dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks'])
+            if not dish_data.id:
+                cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.dishes WHERE parentId = %s", (dish.parentId,))
+                max_sort_result = cursor.fetchone()
+                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
 
-            # Вставка или обновление блюда
-            dish_data = dish.dict()
-            dish_data['sort'] = next_sort  # Установка значения для sort
+                # Вставка или обновление блюда
+                dish_data = dish.model_dump(exclude=['sliderImgs', 'ingredients', 'specialMarks'])
+                dish_data['sort'] = next_sort  # Установка значения для sort
             query = (
                 "INSERT INTO menudb.dishes (id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active, sort) "
                 "VALUES (%(id)s, %(name)s, %(mainImg)s, %(description)s, %(price)s, %(weight)s, %(isSpicy)s, "
