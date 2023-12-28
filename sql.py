@@ -82,13 +82,13 @@ class MenuSQL:
                 raise HTTPException(status_code=400, detail="Section name is busy")
             section_data = section.model_dump(exclude=['subsections', 'dishes'])
             if not section.id:
-            # Определение максимального значения sort
+                # Определение максимального значения sort
                 cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.sections WHERE company_id = %(companyId)s",
                                {'companyId': section.companyId})
                 max_sort_result = cursor.fetchone()
                 next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
 
-            # Вставка или обновление секции
+                # Вставка или обновление секции
 
                 section_data['sort'] = next_sort  # Установка значения для sort
             query = (
@@ -300,7 +300,7 @@ class MenuSQL:
                 "WHERE id = %(id)s "
                 "AND company_id = %(company_id)s"
             )
-            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
+            cursor.execute(query, {'id': id, 'active': int(active == True), 'company_id': company_id})
             self.cnx.commit()
         except HTTPException:
             # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
@@ -317,7 +317,7 @@ class MenuSQL:
                 "WHERE id = %(id)s "
                 "AND companyId = %(company_id)s"
             )
-            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
+            cursor.execute(query, {'id': id, 'active': int(active == True), 'company_id': company_id})
             self.cnx.commit()
         except HTTPException:
             # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
@@ -509,7 +509,6 @@ class MenuSQL:
         except Exception as e:
             # Любые другие исключения обрабатываем здесь
             raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
-
 
     def update_section_sort(self, element: SortingPacket):
         try:
