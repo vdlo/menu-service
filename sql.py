@@ -163,8 +163,7 @@ class MenuSQL:
                 "isSpicy = %(isSpicy)s, "
                 "parentId = %(parentId)s, "
                 "companyId = %(companyId)s, "
-                "active = %(active)s, "
-                "sort = %(sort)s"
+                "active = %(active)s"
             )
             cursor.execute(query, dish_data)
             self.cnx.commit()
