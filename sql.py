@@ -98,8 +98,7 @@ class MenuSQL:
                 "company_id = %(companyId)s, "
                 "name = %(name)s, "
                 "parent_id = %(parent_id)s, "
-                "espeshial = %(espeshial)s, "
-                "sort = %(sort)s"
+                "espeshial = %(espeshial)s"
             )
             cursor.execute(query, section_data)
             self.cnx.commit()
