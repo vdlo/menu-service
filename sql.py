@@ -298,7 +298,7 @@ class MenuSQL:
                 "WHERE id = %(id)s "
                 "AND company_id = %(company_id)s"
             )
-            cursor.execute(query, {'id': id, 'active': int(active == True), 'company_id': company_id})
+            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
             print(id, active, company_id, int(active == True))
             self.cnx.commit()
         except HTTPException:
@@ -316,7 +316,7 @@ class MenuSQL:
                 "WHERE id = %(id)s "
                 "AND companyId = %(company_id)s"
             )
-            cursor.execute(query, {'id': id, 'active': int(active == True), 'company_id': company_id})
+            cursor.execute(query, {'id': id, 'active': active, 'company_id': company_id})
             self.cnx.commit()
         except HTTPException:
             # Пропускаем HTTPException и позволяем FastAPI обработать его самостоятельно
