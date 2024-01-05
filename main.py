@@ -24,7 +24,7 @@ PROJECT_PATH_FRONT = "/opt/menu-service_v1"
 # front
 GITHUB_WEBHOOK_SECRET_BACK = "back487318"
 GITHUB_WEBHOOK_SECRET_FRONT = "front487318"
-IMAGEDIR = "images/"
+IMAGEDIR = "/opt/menu-service/images/"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 app = FastAPI()
