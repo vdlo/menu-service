@@ -216,23 +216,26 @@ class MenuSQL:
 
             for gg in fetch:
                 first_level_child = HierarchyItem(**gg)
-                query = (
-                    "SELECT `sections`.`id` as id,"
-                    "`sections`.`name` as title,"
-                    "`sections`.`parent_id`,"
-                    "`sections`.`active`,"
-                    "`sections`.`sort`,"
-                    "`sections`.`espeshial`"
-                    "FROM `menudb`.`sections`"
-                    "where  parent_id =%s "
-                    "ORDER BY sort ASC "
-                )
-                cursor.execute(query, [gg['id']])
-                fsub = cursor.fetchall()
-                for fs in fsub:
-                    second_level_sub = HierarchyItem(**fs)
-                    second_level_sub.children = self.get_hierarhy_childs(fs['id'])
-                    first_level_child.children.append(second_level_sub)
+                if gg['espeshial']:
+                    first_level_child.children = self.get_hierarhy_childs(gg['id'])
+                else:
+                    query = (
+                        "SELECT `sections`.`id` as id,"
+                        "`sections`.`name` as title,"
+                        "`sections`.`parent_id`,"
+                        "`sections`.`active`,"
+                        "`sections`.`sort`,"
+                        "`sections`.`espeshial`"
+                        "FROM `menudb`.`sections`"
+                        "where  parent_id =%s "
+                        "ORDER BY sort ASC "
+                    )
+                    cursor.execute(query, [gg['id']])
+                    fsub = cursor.fetchall()
+                    for fs in fsub:
+                        second_level_sub = HierarchyItem(**fs)
+                        second_level_sub.children = self.get_hierarhy_childs(fs['id'])
+                        first_level_child.children.append(second_level_sub)
                 result.dataTree.append(first_level_child)
 
             return result
@@ -344,9 +347,12 @@ class MenuSQL:
         result = CompanyFullPackage(companyInfo=company_info)
         result.menu = self.__get_sections(result.companyInfo.id)
         for section in result.menu:
-            section.subsections = self.__get_subsections(section.id)
-            for subsection in section.subsections:
-                subsection.dishes = self.__get_dishes(subsection.id)
+            if section.espeshial:
+                section.dishes = self.__get_dishes(section.id)
+            else:
+                section.subsections = self.__get_subsections(section.id)
+                for subsection in section.subsections:
+                    subsection.dishes = self.__get_dishes(subsection.id)
 
         return result
 
