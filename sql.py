@@ -182,6 +182,9 @@ class MenuSQL:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    def get_promo_list(self, company_id):
+        pass
+
     def get_dish(self, id):
         try:
             cursor = self.cnx.cursor(dictionary=True)

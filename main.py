@@ -106,10 +106,15 @@ async def create_modify_dish(dish: Dish, current_user: User = Depends(get_curren
     return sql.create_modify_dish(dish)
 
 @app.post("/admin/create_modify_promo")  # "/admin/cmdish"
-async def create_modify_dish(promo: Promo, current_user: User = Depends(get_current_user)):
+async def create_modify_promo(promo: Promo, current_user: User = Depends(get_current_user)):
     promo.company_id = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_promo(promo)
+
+@app.get("/admin/get_promo_list")  # "/admin/getdishes"
+async def get_promo_list(current_user: User = Depends(get_current_user)):
+    sql = MenuSQL()
+    return sql.get_promo_list(current_user.companyId)
 
 @app.get("/admin/get_dishes")  # "/admin/getdishes"
 async def get_dishes(current_user: User = Depends(get_current_user)):
