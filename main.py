@@ -8,7 +8,7 @@ import asyncio
 from hashlib import sha1
 import hmac
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket
+    ServiceResponce, Payment, SortingPacket, Promo
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -105,6 +105,11 @@ async def create_modify_dish(dish: Dish, current_user: User = Depends(get_curren
     sql = MenuSQL()
     return sql.create_modify_dish(dish)
 
+@app.post("/admin/create_modify_promo")  # "/admin/cmdish"
+async def create_modify_dish(promo: Promo, current_user: User = Depends(get_current_user)):
+    promo.company_id = current_user.companyId
+    sql = MenuSQL()
+    return sql.create_modify_promo(promo)
 
 @app.get("/admin/get_dishes")  # "/admin/getdishes"
 async def get_dishes(current_user: User = Depends(get_current_user)):

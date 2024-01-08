@@ -2,7 +2,8 @@ import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
 from fastapi import HTTPException
-from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket
+from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket, \
+    Promo
 
 config = {
     'user': 'admin',
@@ -135,6 +136,9 @@ class MenuSQL:
         except Exception as e:
             # Обработка исключений, связанных с базой данных
             raise HTTPException(status_code=500, detail=str(e))
+
+    def create_modify_promo(self, promo: Promo):
+        pass
 
     def create_modify_dish(self, dish: Dish):
         try:

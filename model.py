@@ -31,7 +31,7 @@ class Dish(BaseModel):
     isSpicy: int = 0
     parentId: int = 0
     active: bool = True
-    sort:int = 0
+    sort: int = 0
 
 
 class Subsection(BaseModel):
@@ -50,13 +50,23 @@ class Section(BaseModel):
     espeshial: bool = False
     subsections: List[Subsection] = []
     dishes: List[Dish] = []
-    sort: int =0
+    sort: int = 0
+
+
+class Promo(BaseModel):
+    id: int = 0
+    img: str = ''
+    text: str = ''
+    active: int = 1
+    sort: int = 0
+    type: int = 0
+    company_id: int = 0
 
 
 class CompanyFullPackage(BaseModel):
     companyInfo: Company
     menu: List[Section] = []
-
+    promo: List[Promo] = []
 
 class User(BaseModel):
     name: str
@@ -76,7 +86,6 @@ class HierarchyItem(BaseModel):
     espeshial: bool = False
 
 
-
 class Hierarchy(BaseModel):
     dataTree: List[HierarchyItem] = []
 
@@ -86,11 +95,13 @@ class ServiceResponce(BaseModel):
     description: str = ''
     data: Dict = {}
 
+
 class Payment(BaseModel):
     tariff: int
     months: int
     company_id: int
     user_name: str = ''
+
 
 class SortingPacket(BaseModel):
     id: int
