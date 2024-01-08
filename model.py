@@ -73,6 +73,8 @@ class HierarchyItem(BaseModel):
     children: List = []
     active: bool
     sort: int
+    espeshial: bool = False
+
 
 
 class Hierarchy(BaseModel):
