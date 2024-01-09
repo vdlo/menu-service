@@ -138,7 +138,47 @@ class MenuSQL:
             raise HTTPException(status_code=500, detail=str(e))
 
     def create_modify_promo(self, promo: Promo):
-        pass
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+
+            # Получение данных промо
+            promo_data = promo.dict()
+
+            # Определение максимального значения sort, если id не задан
+            if not promo_data['id']:
+                cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.promo WHERE type = %s", (promo.type,))
+                max_sort_result = cursor.fetchone()
+                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+                promo_data['sort'] = next_sort
+
+            # Формирование запроса для вставки или обновления
+            query = (
+                "INSERT INTO menudb.promo (id, img, text, active, sort, type, company_id) "
+                "VALUES (%(id)s, %(img)s, %(text)s, %(active)s, %(sort)s, %(type)s, %(company_id)s) "
+                "ON DUPLICATE KEY UPDATE "
+                "img = %(img)s, text = %(text)s, active = %(active)s, sort = %(sort)s, type = %(type)s, company_id = %(company_id)s"
+            )
+
+            # Выполнение запроса
+            cursor.execute(query, promo_data)
+            self.cnx.commit()
+
+            # Получение и возврат обновленных данных промо
+            promo_id = cursor.lastrowid if not promo.id else promo.id
+            cursor.execute("SELECT * FROM menudb.promo WHERE id = %s", (promo_id,))
+            result = cursor.fetchone()
+            return result
+
+        except mysql.connector.Error as db_error:
+            # Обработка ошибок базы данных
+            raise HTTPException(status_code=500, detail=str(db_error))
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            # Обработка других исключений
+            raise HTTPException(status_code=500, detail=str(e))
 
     def create_modify_dish(self, dish: Dish):
         try:
@@ -363,6 +403,31 @@ class MenuSQL:
 
         return result
 
+    def __get_promos(self, company_id):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "SELECT id, img, text, active, sort, type, company_id "
+                "FROM menudb.promo "
+                "WHERE company_id = %s "
+                "ORDER BY sort"
+            )
+            cursor.execute(query, [company_id])
+            fetch = cursor.fetchall()
+
+            result = [Promo(**promo) for promo in fetch]
+
+            return result
+
+        except mysql.connector.Error as db_error:
+            # Обработка ошибок базы данных
+            print("Database error:", db_error)
+            return []
+
+        except Exception as e:
+            # Обработка других исключений
+            print("Произошла ошибка при получении промо:", e)
+            return []
     def __get_sections(self, company_id):
         try:
             cursor = self.cnx.cursor(dictionary=True)

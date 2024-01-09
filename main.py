@@ -112,7 +112,7 @@ async def create_modify_promo(promo: Promo, current_user: User = Depends(get_cur
     return sql.create_modify_promo(promo)
 
 @app.get("/admin/get_promo_list")  # "/admin/getdishes"
-async def get_promo_list(current_user: User = Depends(get_current_user)):
+async def get_promo_list(current_user: User = Depends(get_current_user)) -> List[Promo]:
     sql = MenuSQL()
     return sql.get_promo_list(current_user.companyId)
 
