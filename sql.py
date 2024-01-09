@@ -223,7 +223,7 @@ class MenuSQL:
             raise HTTPException(status_code=500, detail=str(e))
 
     def get_promo_list(self, company_id):
-        pass
+        return self.__get_promos(company_id)
 
     def get_dish(self, id):
         try:
@@ -401,6 +401,8 @@ class MenuSQL:
                 for subsection in section.subsections:
                     subsection.dishes = self.__get_dishes(subsection.id)
 
+        result.promo = self.__get_promos(result.companyInfo.id)
+
         return result
 
     def __get_promos(self, company_id):
@@ -422,12 +424,12 @@ class MenuSQL:
         except mysql.connector.Error as db_error:
             # Обработка ошибок базы данных
             print("Database error:", db_error)
-            return []
+
 
         except Exception as e:
             # Обработка других исключений
             print("Произошла ошибка при получении промо:", e)
-            return []
+
     def __get_sections(self, company_id):
         try:
             cursor = self.cnx.cursor(dictionary=True)
