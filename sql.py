@@ -635,6 +635,52 @@ class MenuSQL:
             # Любые другие исключения обрабатываем здесь
             raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
+    def update_promo_sort(self, element: SortingPacket):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+
+            # Получаем текущие данные элемента, включая company_id
+            cursor.execute("SELECT sort, company_id FROM menudb.promo WHERE id = %s", (element.id,))
+            current = cursor.fetchone()
+
+            if not current:
+                raise HTTPException(status_code=404, detail="Промо-акция не найдена")
+
+            current_sort, company_id = current['sort'], current['company_id']
+
+            # Определяем направление сортировки и ищем соседний элемент в рамках того же company_id
+            if element.direction > 0:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.promo
+                    WHERE company_id = %s AND sort > %s
+                    ORDER BY sort ASC LIMIT 1
+                """, (company_id, current_sort))
+            else:
+                cursor.execute("""
+                    SELECT id, sort FROM menudb.promo
+                    WHERE company_id = %s AND sort < %s
+                    ORDER BY sort DESC LIMIT 1
+                """, (company_id, current_sort))
+
+            neighbor = cursor.fetchone()
+
+            if not neighbor:
+                raise HTTPException(status_code=404, detail="Соседняя промо-акция не найдена")
+
+            # Меняем местами значения sort в пределах одного company_id
+            cursor.execute("UPDATE menudb.promo SET sort = %s WHERE id = %s", (neighbor['sort'], element.id))
+            cursor.execute("UPDATE menudb.promo SET sort = %s WHERE id = %s", (current_sort, neighbor['id']))
+
+            self.cnx.commit()
+
+        except HTTPException as http_exc:
+            # Передаем HTTPException дальше
+            raise http_exc
+
+        except Exception as e:
+            # Любые другие исключения обрабатываем здесь
+            raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
     def fill_sort_order(self):
         try:
             cursor = self.cnx.cursor(dictionary=True)
