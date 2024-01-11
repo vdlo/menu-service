@@ -593,27 +593,31 @@ class MenuSQL:
             cursor = self.cnx.cursor(dictionary=True)
 
             # Получаем текущие данные элемента
-            cursor.execute("SELECT sort, parent_id FROM menudb.sections WHERE id = %s", (element.id,))
+            cursor.execute("""
+                SELECT sort, parent_id, company_id 
+                FROM menudb.sections 
+                WHERE id = %s
+            """, (element.id,))
             current = cursor.fetchone()
 
             if not current:
                 raise HTTPException(status_code=404, detail="Секция не найдена")
 
-            current_sort, parent_id = current['sort'], current['parent_id']
+            current_sort, parent_id, company_id = current['sort'], current['parent_id'], current['company_id']
 
             # Определяем направление сортировки и ищем соседний элемент
             if element.direction > 0:
                 cursor.execute("""
                     SELECT id, sort FROM menudb.sections
-                    WHERE parent_id = %s AND sort > %s
+                    WHERE parent_id = %s AND company_id = %s AND sort > %s
                     ORDER BY sort ASC LIMIT 1
-                """, (parent_id, current_sort))
+                """, (parent_id, company_id, current_sort))
             else:
                 cursor.execute("""
                     SELECT id, sort FROM menudb.sections
-                    WHERE parent_id = %s AND sort < %s
+                    WHERE parent_id = %s AND company_id = %s AND sort < %s
                     ORDER BY sort DESC LIMIT 1
-                """, (parent_id, current_sort))
+                """, (parent_id, company_id, current_sort))
 
             neighbor = cursor.fetchone()
 
@@ -621,8 +625,16 @@ class MenuSQL:
                 raise HTTPException(status_code=404, detail="Соседняя секция не найдена")
 
             # Меняем местами значения sort
-            cursor.execute("UPDATE menudb.sections SET sort = %s WHERE id = %s", (neighbor['sort'], element.id))
-            cursor.execute("UPDATE menudb.sections SET sort = %s WHERE id = %s", (current_sort, neighbor['id']))
+            cursor.execute("""
+                UPDATE menudb.sections 
+                SET sort = %s 
+                WHERE id = %s
+            """, (neighbor['sort'], element.id))
+            cursor.execute("""
+                UPDATE menudb.sections 
+                SET sort = %s 
+                WHERE id = %s
+            """, (current_sort, neighbor['id']))
 
             self.cnx.commit()
 
