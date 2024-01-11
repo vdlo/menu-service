@@ -646,7 +646,7 @@ class MenuSQL:
                 raise HTTPException(status_code=404, detail="Промо-акция не найдена")
 
             current_sort, company_id = current['sort'], current['company_id']
-
+            print(current_sort, company_id)
             # Определяем направление сортировки и ищем соседний элемент в рамках того же company_id
             if element.direction > 0:
                 cursor.execute("""
@@ -664,6 +664,7 @@ class MenuSQL:
             neighbor = cursor.fetchone()
 
             if not neighbor:
+                print('not found')
                 raise HTTPException(status_code=404, detail="Соседняя промо-акция не найдена")
 
             # Меняем местами значения sort в пределах одного company_id
