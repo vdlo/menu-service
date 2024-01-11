@@ -98,8 +98,7 @@ class MenuSQL:
                 "ON DUPLICATE KEY UPDATE "
                 "company_id = %(companyId)s, "
                 "name = %(name)s, "
-                "parent_id = %(parent_id)s, "
-                "espeshial = %(espeshial)s"
+                "parent_id = %(parent_id)s"
             )
             cursor.execute(query, section_data)
             self.cnx.commit()
