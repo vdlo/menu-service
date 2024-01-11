@@ -157,12 +157,12 @@ async def update_dish_sort(element: SortingPacket, current_user: User = Depends(
 @app.post("/admin/update_promo_sort")
 async def update_dish_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.update_dish_sort(element)
+    return sql.update_promo_sort(element)
 
 @app.post("/admin/update_section_sort",)
 async def update_promo_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
-    return sql.update_promo_sort(element)
+    return sql.update_section_sort(element)
 
 @app.post("/admin/upload_file/")
 async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[str, str]:
