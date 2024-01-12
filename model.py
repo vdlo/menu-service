@@ -15,6 +15,7 @@ class Company(BaseModel):
     faceBook: Optional[str] = None
     img: str = None
     link: str = ''
+    color_theme: str = 'green'
 
 
 class Dish(BaseModel):

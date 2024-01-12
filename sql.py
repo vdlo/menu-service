@@ -50,7 +50,8 @@ class MenuSQL:
                 "geoTag = %(geoTag)s, "
                 "instagram = %(instagram)s, "
                 "faceBook = %(faceBook)s, "
-                "img = %(img)s"
+                "img = %(img)s,"
+                "color_theme = %(color_theme)s"
             )
             cursor.execute(query, company.model_dump(exclude=['workingTime']))
             self.cnx.commit()
