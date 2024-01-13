@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
 from fastapi import HTTPException
 from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket, \
-    Promo
+    Promo, CustomerRequest
 
 config = {
     'user': 'admin',
@@ -713,6 +713,17 @@ class MenuSQL:
         except Exception as e:
             self.cnx.rollback()
             raise e
+
+    def new_customer_request(self, customer_request: CustomerRequest):
+        cursor = self.cnx.cursor()
+        query = ("INSERT INTO menudb.customer_requests"
+                 "(customer_name, email, phone, password, company_name)"
+                 " VALUES (%(customer_name)s, %(email)s, %(phone)s, %(password)s, %(company_name)s)")
+        cursor.execute(query, customer_request.model_dump())
+        self.cnx.commit()
+        # Здесь может быть логика для получения записи после вставки
+        # Например, возврат ID добавленной записи
+        return cursor.lastrowid
 
     def _update_sort_order(self, cursor, records, table_name, parent_field_name):
         sort_order = 0

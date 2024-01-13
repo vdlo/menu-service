@@ -107,3 +107,12 @@ class Payment(BaseModel):
 class SortingPacket(BaseModel):
     id: int
     direction: int
+
+
+class CustomerRequest(BaseModel):
+    id: Optional[int]
+    customer_name: str
+    email: str
+    phone: str
+    password: str  # Предполагается, что пароль будет хеширован до записи
+    company_name: str

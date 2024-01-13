@@ -8,7 +8,7 @@ import asyncio
 from hashlib import sha1
 import hmac
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket, Promo
+    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -183,7 +183,10 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
 
-
+@app.post("/customer/new_customer_request",)
+async def new_customer_request(customer_request: CustomerRequest):
+    sql = MenuSQL()
+    return sql.new_customer_request(customer_request)
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
     if not current_user.admin:
