@@ -437,7 +437,7 @@ class MenuSQL:
             query = (
                 "SELECT id, company_id, name, parent_id, espeshial, active, sort "
                 "FROM menudb.sections "
-                "WHERE ifnull(parent_id, 0) = 0 AND company_id = %s and active = 1"
+                "WHERE ifnull(parent_id, 0) = 0 AND company_id = %s and active = 1 "
                 "ORDER BY sort"
             )
             cursor.execute(query, [company_id])
@@ -460,7 +460,7 @@ class MenuSQL:
             query = (
                 "SELECT id, company_id, name, parent_id, espeshial, active, sort "
                 "FROM menudb.sections "
-                "WHERE ifnull(parent_id, 0) = %s and active = 1"
+                "WHERE ifnull(parent_id, 0) = %s and active = 1 "
                 "ORDER BY sort"
             )
             cursor.execute(query, [parent_id])
@@ -483,7 +483,7 @@ class MenuSQL:
             query = (
                 "SELECT id, name, mainImg, description, price, weight, isSpicy, parentId, companyId, active, sort "
                 "FROM menudb.dishes "
-                "WHERE parentId = %s "
+                "WHERE parentId = %s AND active = 1 "
                 "ORDER BY sort"
             )
             cursor.execute(query, [parent_id])
