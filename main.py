@@ -7,8 +7,10 @@ import asyncio
 
 from hashlib import sha1
 import hmac
+
+from gpt import GPT
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest
+    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -182,6 +184,19 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
+
+@app.post("/admin/generate_description/")
+async def generate_description(promt: GptPromt) -> Dict[str, str]:
+    seed = 1
+    try:
+        # Создания экземпляра класса GPT
+        gpt = GPT(seed=seed)
+        # Получение ответа от GPT
+        response = gpt.request_chat(f'Придумай описание блюда {promt.theme}'
+                                    f' для меню используя дополнительные вводные {promt.promt} не более 255 символов')
+        return {"description": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating description: {e}")
 
 @app.post("/customer/new_customer_request",)
 async def new_customer_request(customer_request: CustomerRequest):

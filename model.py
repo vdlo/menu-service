@@ -116,3 +116,7 @@ class CustomerRequest(BaseModel):
     phone: str
     password: str  # Предполагается, что пароль будет хеширован до записи
     company_name: str
+
+class GptPromt(BaseModel):
+    promt: str
+    theme: str
