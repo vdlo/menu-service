@@ -3,7 +3,7 @@ from openai import OpenAI, _types as OpenAI_types
 
 class GPT:
     def __init__(self,  seed: int = None):
-        self.api_key = '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'
+        self.api_key = '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'
         self.client = OpenAI(api_key=self.api_key)
         self.seed = seed
 
