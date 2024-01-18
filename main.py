@@ -193,7 +193,7 @@ async def generate_description(promt: GptPromt) -> Dict[str, str]:
         gpt = GPT(seed=seed)
         # Получение ответа от GPT
         response = gpt.request_chat(f'Придумай описание блюда {promt.theme}'
-                                    f' для меню используя дополнительные вводные {promt.promt} не более 255 символов')
+                                    f' для меню используя дополнительные вводные {promt.promt} текст должен быть не длиннее 255 символов')
         return {"description": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating description: {e}")
