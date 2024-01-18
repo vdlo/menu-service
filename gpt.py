@@ -1,9 +1,11 @@
 from openai import OpenAI, _types as OpenAI_types
+import os
 
+API_KEY = os.getenv("GPT_API_KEY")
 
 class GPT:
     def __init__(self,  seed: int = None):
-        self.api_key = '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'
+        self.api_key = API_KEY
         self.client = OpenAI(api_key=self.api_key)
         self.seed = seed
 
