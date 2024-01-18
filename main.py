@@ -186,13 +186,13 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
 
 @app.post("/admin/generate_description/")
-async def generate_description(promt: GptPromt) -> Dict[str, str]:
-    seed = 1
+async def generate_description(promt: GptPromt, current_user: User = Depends(get_current_user)) -> Dict[str, str]:
+
     try:
         # Создания экземпляра класса GPT
-        gpt = GPT(seed=seed)
+        gpt = GPT(seed=current_user.companyId)
         # Получение ответа от GPT
-        response = gpt.request_chat(f'Придумай описание не длиннее 255 символов блюда {promt.theme}'
+        response = gpt.request_chat(f'Придумай описание на аглийском языке не длиннее 255 символов блюда {promt.theme}'
                                     f' для меню используя дополнительные вводные {promt.promt} ')
         return {"description": response}
     except Exception as e:
