@@ -1,7 +1,7 @@
 from openai import OpenAI, _types as OpenAI_types
 import os
 
-API_KEY = os.getenv("GPT_API_KEY")
+API_KEY = os.environ.get("GPT_API_KEY")
 
 class GPT:
     def __init__(self,  seed: int = None):
