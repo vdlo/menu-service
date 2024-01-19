@@ -6,7 +6,6 @@ import os
 class GPT:
     def __init__(self,  seed: int = None):
         self.api_key = os.environ.get("GPT_API_KEY")
-        print(self.api_key)
         self.client = OpenAI(api_key=self.api_key)
         self.seed = seed
 
