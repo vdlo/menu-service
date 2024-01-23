@@ -88,7 +88,7 @@ class MenuSQL:
                 cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.sections WHERE company_id = %(companyId)s",
                                {'companyId': section.companyId})
                 max_sort_result = cursor.fetchone()
-                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+                next_sort = (max_sort_result['max_sort'] + 1 if max_sort_result['max_sort'] is not None else 0) + 1
 
                 # Вставка или обновление секции
 
@@ -148,7 +148,7 @@ class MenuSQL:
             if not promo_data['id']:
                 cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.promo WHERE type = %s", (promo.type,))
                 max_sort_result = cursor.fetchone()
-                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+                next_sort = (max_sort_result['max_sort'] + 1 if max_sort_result['max_sort'] is not None else 0) + 1
                 promo_data['sort'] = next_sort
 
             # Формирование запроса для вставки или обновления
@@ -189,7 +189,7 @@ class MenuSQL:
             if not dish_data['id']:
                 cursor.execute("SELECT MAX(sort) as max_sort FROM menudb.dishes WHERE parentId = %s", (dish.parentId,))
                 max_sort_result = cursor.fetchone()
-                next_sort = (max_sort_result['max_sort'] if max_sort_result['max_sort'] is not None else 0) + 1
+                next_sort = (max_sort_result['max_sort'] + 1 if max_sort_result['max_sort'] is not None else 0) + 1
 
                 # Вставка или обновление блюда
 
