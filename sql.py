@@ -758,6 +758,7 @@ class MenuSQL:
 
             # Создаем новую компанию
             company = Company(
+                id=None,
                 name=customer_request.company_name,
                 title=customer_request.company_name,
                 address='',
