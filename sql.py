@@ -2,9 +2,11 @@ import mysql.connector
 from datetime import date, datetime, timedelta
 from mysql.connector import errorcode
 from fastapi import HTTPException
+from passlib.context import CryptContext
+
 from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket, \
     Promo, CustomerRequest
-
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 config = {
     'user': 'admin',
     'password': 'RhceDL!2',
@@ -38,9 +40,9 @@ class MenuSQL:
         try:
             cursor = self.cnx.cursor(dictionary=True)
             query = (
-                "INSERT INTO menudb.company (id, name, description, title, address, phone, geoTag, instagram, faceBook, img) "
-                "VALUES (%(id)s, %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s, "
-                "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s) "
+                "INSERT INTO menudb.company (name, description, title, address, phone, geoTag, instagram, faceBook, img, link) "
+                "VALUES ( %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s,  "
+                "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s, %(link)s) "
                 "ON DUPLICATE KEY UPDATE "
                 "name = %(name)s, "
                 "description = %(description)s, "
@@ -57,6 +59,8 @@ class MenuSQL:
             self.cnx.commit()
 
             # Получаем обновленные данные компании
+            if not company.id or company.id == 0:
+                company.id = cursor.lastrowid
             result = self.get_company(company.id)
             return result
 
@@ -331,11 +335,15 @@ class MenuSQL:
 
     def new_user(self, user: User):
         cursor = self.cnx.cursor()
-        query = ("INSERT INTO menudb.users"
-                 "(name,hash,companyId)"
-                 " VALUES (%(name)s, %(hash)s, %(companyId)s)")
+        query = (
+            "INSERT INTO menudb.users "
+            "(name, hash, companyId, admin, phone_number, email, full_name) "
+            "VALUES (%(name)s, %(hash)s, %(companyId)s, %(admin)s, %(phone_number)s, %(email)s, %(full_name)s)"
+        )
         cursor.execute(query, user.model_dump())
         self.cnx.commit()
+
+        # Убедитесь, что get_user может обрабатывать новые поля и возвращает экземпляр User.
         result = self.get_user(user.name)
         return result
 
@@ -725,6 +733,76 @@ class MenuSQL:
         # Здесь может быть логика для получения записи после вставки
         # Например, возврат ID добавленной записи
         return cursor.lastrowid
+
+    def cudtomer_sign_up(self, customer_request: CustomerRequest): # -> User:
+
+        if self.get_user(customer_request.email):
+            raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+        try:
+            # Создаем company link из названия компании и проверяем на уникальность
+            # Если не уникально, добавляем к названию компании цифру
+            company_link = customer_request.company_name.lower().replace(' ', '-')
+            cursor = self.cnx.cursor(dictionary=True)
+            check_query = (
+                "SELECT id FROM menudb.company "
+                "WHERE link = %(link)s"
+            )
+            params = {'link': company_link}
+            cursor.execute(check_query, params)
+            if cursor.fetchone():
+                company_link += '1'
+                params['link'] = company_link
+                cursor.execute(check_query, params)
+                if cursor.fetchone():
+                    raise HTTPException(status_code=400, detail="Название компании уже занято")
+
+            # Создаем новую компанию
+            company = Company(
+                name=customer_request.company_name,
+                title=customer_request.company_name,
+                address='',
+                phone='',
+                geoTag='',
+                instagram='',
+                faceBook='',
+                img='',
+                color_theme='',
+                link=company_link
+
+            )
+            company = self.create_modify_company(company)
+            # Создаем специальную секцию для компании
+            section = Section(
+                companyId=company.id,
+                name='SPECIAL',
+                espeshial=True,
+                parent_id=0,
+            )
+            section = self.create_modify_section(section)
+
+            # Создаем нового пользователя
+
+            user = User(
+                name=customer_request.email,
+                hash=pwd_context.hash(customer_request.password),
+                companyId=company.id,
+                email=customer_request.email,
+                phone=customer_request.phone,
+                fullName=customer_request.customer_name,
+            )
+            user = self.new_user(user)
+            # Создаем платеж
+            payment = Payment(
+                company_id=company.id,
+                tariff=0,
+                months=1
+            )
+            self.add_payment(user.name, payment)
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        return company.link
 
     def _update_sort_order(self, cursor, records, table_name, parent_field_name):
         sort_order = 0

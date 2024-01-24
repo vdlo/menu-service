@@ -202,6 +202,12 @@ async def generate_description(promt: GptPromt, current_user: User = Depends(get
 async def new_customer_request(customer_request: CustomerRequest):
     sql = MenuSQL()
     return sql.new_customer_request(customer_request)
+
+@app.post("/customer/sign_up")
+async def sign_up(customer_request: CustomerRequest):
+    sql = MenuSQL()
+    return sql.cudtomer_sign_up(customer_request)
+
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
     if not current_user.admin:

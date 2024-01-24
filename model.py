@@ -75,6 +75,9 @@ class User(BaseModel):
     hash: str = None
     companyId: int = 0
     admin: bool = 0
+    phone_number: str = None
+    email: str = None
+    full_name: str = None
 
 
 class HierarchyItem(BaseModel):
@@ -110,7 +113,6 @@ class SortingPacket(BaseModel):
 
 
 class CustomerRequest(BaseModel):
-    id: Optional[int]
     customer_name: str
     email: str
     phone: str
