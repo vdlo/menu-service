@@ -40,8 +40,8 @@ class MenuSQL:
         try:
             cursor = self.cnx.cursor(dictionary=True)
             query = (
-                "INSERT INTO menudb.company (name, description, title, address, phone, geoTag, instagram, faceBook, img, link) "
-                "VALUES ( %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s,  "
+                "INSERT INTO menudb.company (id, name, description, title, address, phone, geoTag, instagram, faceBook, img, link) "
+                "VALUES (%(id)s, %(name)s, %(description)s, %(title)s, %(address)s, %(phone)s,  "
                 "%(geoTag)s, %(instagram)s, %(faceBook)s, %(img)s, %(link)s) "
                 "ON DUPLICATE KEY UPDATE "
                 "name = %(name)s, "
