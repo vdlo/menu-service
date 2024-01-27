@@ -20,6 +20,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import telegram_bot as tg
+import gmail as gm
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
@@ -207,6 +208,17 @@ async def new_customer_request(customer_request: CustomerRequest):
 async def sign_up(customer_request: CustomerRequest):
     sql = MenuSQL()
     return sql.cudtomer_sign_up(customer_request)
+
+@app.post("/customer/forgot_password")
+async def forgot_password(email: str):
+
+    sql = MenuSQL()
+    if not sql.get_user(email):
+        raise HTTPException(status_code=400, detail="User with this email not found")
+    jwt_token = create_jwt_token({"sub": email}, EXPIRATION_TIME=EXPIRATION_TIME)
+    gm.Gmail(email, 'Password recovery', f'Your recovery link: https://menu-service.ru/forgot_password/{jwt_token}').send()
+
+
 
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class Company(BaseModel):
-    id: int = 0
+    id: Optional[int] = None
     name: str = None
     title: str = None
     description: Optional[str] = None
