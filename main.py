@@ -20,7 +20,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import telegram_bot as tg
-import gmail as gm
+from gmail import GmailClient
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
@@ -207,18 +207,40 @@ async def new_customer_request(customer_request: CustomerRequest):
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest):
     sql = MenuSQL()
-    return sql.cudtomer_sign_up(customer_request)
+    company_link = sql.cudtomer_sign_up(customer_request)
+    gmail_client = GmailClient(
+        'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
+    sender = "admin@me-qr.me"
+    to = customer_request.email
+    subject = "New account"
+    # HTML-содержимое письма
+    html_content = ("\n"
+                    "    <html>\n"
+                    "      <body>\n"
+                    f"        <p>Привет, {customer_request.customer_name} <br>\n"
+                    "          <b>Аккаунт вашей компании создан и доступен по ссылкет</b> "
+                    f" <i>{company_link}</i>.\n"
+                    "        </p>\n"
+                    "      </body>\n"
+                    "    </html>\n"
+                    "    ")
+    message = gmail_client.create_message_html(sender, to, subject, html_content)
+    gmail_client.send_message("me", message)
+    return company_link
 
 @app.post("/customer/forgot_password")
-async def forgot_password(email: str):
-
+def forgot_password(email):
     sql = MenuSQL()
     if not sql.get_user(email):
-        raise HTTPException(status_code=400, detail="User with this email not found")
-    jwt_token = create_jwt_token({"sub": email}, EXPIRATION_TIME=EXPIRATION_TIME)
-    gm.Gmail(email, 'Password recovery', f'Your recovery link: https://menu-service.ru/forgot_password/{jwt_token}').send()
-
-
+        raise HTTPException(status_code=400, detail="User not found")
+    new_token = create_jwt_token({"sub": email}, EXPIRATION_TIME=EXPIRATION_TIME)
+    gmail_client = GmailClient('client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
+    sender = "admin@me-qr.me"
+    to = email
+    subject = "Password recovery"
+    message_text = f"Your password recovery link: https://me-qr.me/recovery/{new_token}"
+    message = gmail_client.create_message(sender, to, subject, message_text)
+    gmail_client.send_message("me", message)
 
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
@@ -289,12 +311,9 @@ async def webhook_front(
 
         # Обновляем код из репозитория
         subprocess.run(["git", "pull", "origin", "master"])
-        # Запускаем npm install
-        subprocess.run(["sudo", "npm", "install"])
-        # Запускаем npm run build
-        subprocess.run(["sudo", "npm", "run", "build"])
+
          # Перезапускаем приложение через systemctl
-        #subprocess.run(["sudo", "systemctl", "restart", "menu_service_front.service"])
+        subprocess.run(["sudo", "systemctl", "restart", "menu_service_front.service"])
 
     return {"status": "OK"}
 
