@@ -205,9 +205,11 @@ async def new_customer_request(customer_request: CustomerRequest):
     return sql.new_customer_request(customer_request)
 
 @app.post("/customer/sign_up")
-async def sign_up(customer_request: CustomerRequest):
+async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
     company_link = sql.cudtomer_sign_up(customer_request)
+
+
     gmail_client = GmailClient(
         'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
     sender = "admin@me-qr.me"

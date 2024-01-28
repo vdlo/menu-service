@@ -772,6 +772,7 @@ class MenuSQL:
 
             )
             company = self.create_modify_company(company)
+            customer_request.company_link = company_link
             # Создаем специальную секцию для компании
             section = Section(
                 companyId=company.id,
@@ -799,11 +800,13 @@ class MenuSQL:
                 months=1
             )
             self.add_payment(user.name, payment)
+
         except HTTPException as http_exc:
             raise http_exc
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        return company.link
+        customer_request.password = None
+        return customer_request
 
     def _update_sort_order(self, cursor, records, table_name, parent_field_name):
         sort_order = 0
