@@ -239,6 +239,7 @@ def forgot_password(input: ForgotPassword):
 def recovery_password(input: ResetPassword):
     token = input.token
     password = input.password
+    print(password)
     decoded_data = verify_jwt_token(token)
     if not decoded_data:
         raise HTTPException(status_code=401, detail="Invalid token")
