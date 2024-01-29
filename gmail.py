@@ -1,4 +1,5 @@
 from google.oauth2.credentials import Credentials
+from jinja2 import Environment, FileSystemLoader
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -70,6 +71,25 @@ class GmailClient:
             return sent_message
         except Exception as e:
             print('An error occurred: %s' % e)
+
+    def send_email_using_template(self, sender, to, subject, template_name, data):
+
+        env = Environment(loader=FileSystemLoader('html_email_templates/'))
+        template = env.get_template(template_name)
+        html_content = template.render(**data)
+
+        html_message = MIMEMultipart('alternative')
+        html_message['to'] = to
+        html_message['from'] = sender
+        html_message['subject'] = subject
+
+        html_message.attach(MIMEText(html_content, 'html'))
+        print(MIMEText(html_content, 'html'))
+        raw = base64.urlsafe_b64encode(html_message.as_bytes())
+
+        result = self.send_message('me', {'raw': raw.decode()})
+        print(result)
+
 
 
 
