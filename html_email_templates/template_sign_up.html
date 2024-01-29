@@ -1,10 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{{ subject }}</title>
+    <meta charset="UTF-8">
+    <title>{{subject}}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Dela+Gothic+One&display=swap:wght@400;500;600;700');
+
+        h3,  h4 {
+            font-family: 'Dela Gothic One', sans-serif;
+            font-weight: 400;
+            color: #A85E44;
+        }
+        h4 {
+            margin-top: 0;
+        }
+       .registered a {
+            color: black;
+            text-decoration: unset;
+            padding-bottom: 2px;
+            border-bottom: 2px solid #63B561;
+        }
+        .registered {
+            font-family: 'Archivo', sans-serif;
+            font-size: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .dataWrap {
+            font-size: 18px;
+            margin-bottom: 30px;
+            width: fit-content;
+        }
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .dataTitle {
+            margin-right: 20px;
+        }
+        .qrWrap {
+            position: relative;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            text-align: center;
+            border-top: 2px solid rgba(168, 94, 68, 0.5);
+        }
+        .qrImg {
+            width: 130px;
+            margin-bottom: 5px;
+            padding: 15px;
+            border: 1px solid #CCCCCC;
+            border-radius: 15px;
+        }
+    </style>
 </head>
 <body>
-    <h1>{{ greeting }}</h1>
-    <p>{{ message }}</p>
+<div class="registered">
+    <h3>Now everything is ready to creating your personal page!</h3>
+    <p>Please, go to your personal account to complete the process</p>
+    <h4>Here are your login details:</h4>
+      <div class="dataWrap">
+        <div class="flex">
+            <div class="dataTitle">Link to the admin panel:</div>
+            <div><a href="https://me-qr.me/admin">me-qr.me/admin</a></div>
+        </div>
+        <div class="flex">
+            <div class="dataTitle">Login:</div>
+            <div>{{ email }}</div>
+        </div>
+
+    </div>
+    <div class="qrWrap">
+        <h4>Your page is viewable via this QR code:</h4>
+        <img class="qrImg" src="https://barcode.tec-it.com/barcode.ashx?data=https://me-qr.me/tru_la_la&code=MobileQRCode&translate-esc=on&imagetype=Png&eclevel=L" />
+        <div>
+            <a href="https://me-qr.me/{{ company_link }}" target="_blank">me-qr.me/{{ company_link }}</a>
+        </div>
+    </div>
+</div>
 </body>
 </html>

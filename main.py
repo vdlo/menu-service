@@ -207,7 +207,7 @@ async def new_customer_request(customer_request: CustomerRequest):
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
-    company_link = 'dsfsdfsdf' # sql.cudtomer_sign_up(customer_request)
+    sql.cudtomer_sign_up(customer_request)
 
 
     gmail_client = GmailClient(
@@ -215,11 +215,8 @@ async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sender = "admin@me-qr.me"
     to = customer_request.email
     subject = "New account"
-    data = {'subject': company_link,
-            'greeting': f'Hello, {customer_request.customer_name}!',
-            'message': 'Your account has been created. You can log in to your account using the link below.',
-            }
-    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', data)
+
+    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', customer_request.dict())
     return customer_request
 
 @app.post("/customer/forgot_password")
