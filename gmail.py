@@ -83,7 +83,6 @@ class GmailClient:
         html_message['subject'] = subject
 
         html_message.attach(MIMEText(html_content, 'html'))
-        print(MIMEText(html_content, 'html'))
         raw = base64.urlsafe_b64encode(html_message.as_bytes())
 
         result = self.send_message('me', {'raw': raw.decode()})
