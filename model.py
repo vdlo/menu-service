@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, Dict, List, Union
 from pydantic import BaseModel
 
@@ -16,6 +17,7 @@ class Company(BaseModel):
     img: str = None
     link: str = ''
     color_theme: str = 'green'
+    payment_expiration_date: Optional[datetime.date] = None
 
 
 class Dish(BaseModel):

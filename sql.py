@@ -34,6 +34,7 @@ class MenuSQL:
         if not gg:
             raise HTTPException(status_code=404, detail=f'Company not found')
         result = Company(**gg)
+        #result.payment_expiration_date = self.check_company_payment_date(id)
         return result
 
     def create_modify_company(self, company: Company):
@@ -394,10 +395,38 @@ class MenuSQL:
         result = Company(**gg)
         return result
 
+
+    def check_company_payment_date(self, id: int):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "SELECT MAX(expiration_date) FROM menudb.billing "
+                "WHERE companyId = %(companyId)s"
+            )
+            cursor.execute(query, {"companyId": id})
+            result = cursor.fetchone()
+
+            if result and result[0] is not None:
+                max_expiration_date = result[0].date()
+                current_date = datetime.now().date()
+                return max_expiration_date
+            else:
+                # Возвращаем False, если запись не найдена или expiration_date равен None
+                return False
+
+        except mysql.connector.Error as err:
+            raise HTTPException(status_code=500, detail=str(err))
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     def get_company_data(self, link: str):
         company_info = self.get_company_by_link(link)
         if not company_info:
-            raise Exception('Company not found')
+            raise HTTPException(status_code=404, detail="Company not found")
+
+        #if not self.check_company_payment(company_info.id) or self.check_company_payment_date(company_info.id) < date.today():
+            #raise HTTPException(status_code=403, detail="Payment required")
 
         result = CompanyFullPackage(companyInfo=company_info)
         result.menu = self.__get_sections(result.companyInfo.id)

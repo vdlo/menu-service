@@ -231,7 +231,7 @@ def forgot_password(input: ForgotPassword):
     sender = "admin@me-qr.me"
     to = email
     subject = "Password recovery"
-    message_text = f"Your password recovery link: https://me-qr.me/recovery?{new_token}"
+    message_text = f"Your password recovery link: https://me-qr.me/recovery/{new_token}"
     message = gmail_client.create_message(sender, to, subject, message_text)
     gmail_client.send_message("me", message)
 
