@@ -858,7 +858,7 @@ class MenuSQL:
                 "SET hash = %(hash)s "
                 "WHERE name = %(name)s "
             )
-            cursor.execute(query, {'name': username, 'hash': pwd_context.hash(new_password)})
+            cursor.execute(query, {'name': username, 'hash': new_password})
             self.cnx.commit()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
