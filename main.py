@@ -69,8 +69,7 @@ def authenticate_user(user_in: User):
     user = sql.get_user(user_in.name)  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-    print(user_in.password)
-    print(user.hash)
+
     is_password_correct = pwd_context.verify(user_in.password, user.hash)
 
     if not is_password_correct:
@@ -240,7 +239,7 @@ def forgot_password(input: ForgotPassword):
 def recovery_password(input: ResetPassword):
     token = input.token
     password = input.password
-    print(password)
+
     decoded_data = verify_jwt_token(token)
     if not decoded_data:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -249,7 +248,7 @@ def recovery_password(input: ResetPassword):
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     hashed_password = pwd_context.hash(password)
-    print(hashed_password)
+
     sql.update_user_password(user.name, hashed_password)
     return {"Token": token, "Password": password}
 
