@@ -207,17 +207,17 @@ async def new_customer_request(customer_request: CustomerRequest):
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
-    sql.cudtomer_sign_up(customer_request)
+    result = sql.cudtomer_sign_up(customer_request)
 
 
     gmail_client = GmailClient(
         'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
     sender = "admin@me-qr.me"
-    to = customer_request.email
+    to = result.email
     subject = "New account"
 
-    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', customer_request.dict())
-    return customer_request
+    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', result.dict())
+    return result
 
 @app.post("/customer/forgot_password")
 def forgot_password(email):
