@@ -123,3 +123,10 @@ class CustomerRequest(BaseModel):
 class GptPromt(BaseModel):
     promt: str
     theme: str
+
+class ForgotPassword(BaseModel):
+    email: str
+
+class ResetPassword(BaseModel):
+    token: str
+    password: str
