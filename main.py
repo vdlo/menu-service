@@ -69,7 +69,8 @@ def authenticate_user(user_in: User):
     user = sql.get_user(user_in.name)  # Получите пользователя из базы данных
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-
+    print(user_in.password)
+    print(user.hash)
     is_password_correct = pwd_context.verify(user_in.password, user.hash)
 
     if not is_password_correct:
@@ -248,6 +249,7 @@ def recovery_password(input: ResetPassword):
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     hashed_password = pwd_context.hash(password)
+    print(hashed_password)
     sql.update_user_password(user.name, hashed_password)
     return {"Token": token, "Password": password}
 
@@ -259,6 +261,7 @@ async def sign_up(name: str, password: str, company_id: int = 0, current_user: U
     if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
+
     new_user = sql.new_user(User(name=name, hash=hashed_password, companyId=company_id))
     return new_user
 
