@@ -17,7 +17,7 @@ class Company(BaseModel):
     img: str = None
     link: str = ''
     color_theme: str = 'green'
-    payment_expiration_date: Optional[datetime.date] = None
+    #payment_expiration_date: Optional[datetime.date] = None
 
 
 class Dish(BaseModel):
