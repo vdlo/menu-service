@@ -821,3 +821,15 @@ class MenuSQL:
                 sort_order += 1
 
             cursor.execute(f"UPDATE menudb.{table_name} SET sort = %s WHERE id = %s", (sort_order, record['id']))
+    def update_user_password(self, username, new_password):
+        try:
+            cursor = self.cnx.cursor(dictionary=True)
+            query = (
+                "UPDATE menudb.users "
+                "SET hash = %(hash)s "
+                "WHERE name = %(name)s "
+            )
+            cursor.execute(query, {'name': username, 'hash': pwd_context.hash(new_password)})
+            self.cnx.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

@@ -233,6 +233,18 @@ def forgot_password(email):
     message = gmail_client.create_message(sender, to, subject, message_text)
     gmail_client.send_message("me", message)
 
+@app.post("/customer/recovery_password")
+def recovery_password(token, password):
+    decoded_data = verify_jwt_token(token)
+    if not decoded_data:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    sql = MenuSQL()
+    user = sql.get_user(decoded_data["sub"])
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    hashed_password = pwd_context.hash(password)
+    sql.update_user_password(user.name, hashed_password)
+
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
     if not current_user.admin:
