@@ -221,6 +221,7 @@ async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
 
 @app.post("/customer/forgot_password")
 def forgot_password(email):
+    print(email)
     sql = MenuSQL()
     if not sql.get_user(email):
         raise HTTPException(status_code=400, detail="User not found")
