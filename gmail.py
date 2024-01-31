@@ -8,10 +8,12 @@ from email.mime.text import MIMEText
 import os.path
 import pickle
 
+
+current_directory = os.getcwd()
 class GmailClient:
     def __init__(self, credentials_file, token_file='token.pickle'):
-        self.token_file = token_file
-        self.credentials_file = credentials_file
+        self.token_file = os.path.join(current_directory, token_file)
+        self.credentials_file = os.path.join(current_directory, credentials_file)
         self.service = self.authenticate_gmail()
 
     def authenticate_gmail(self):
