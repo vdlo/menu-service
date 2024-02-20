@@ -1,4 +1,3 @@
-from google.oauth2.credentials import Credentials
 from jinja2 import Environment, FileSystemLoader
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -9,10 +8,12 @@ from email.mime.text import MIMEText
 import os.path
 import pickle
 
+
+current_directory = os.getcwd()
 class GmailClient:
     def __init__(self, credentials_file, token_file='token.pickle'):
-        self.token_file = token_file
-        self.credentials_file = credentials_file
+        self.token_file = os.path.join(current_directory, token_file)
+        self.credentials_file = os.path.join(current_directory, credentials_file)
         self.service = self.authenticate_gmail()
 
     def authenticate_gmail(self):
@@ -84,7 +85,6 @@ class GmailClient:
         html_message['subject'] = subject
 
         html_message.attach(MIMEText(html_content, 'html'))
-        print(MIMEText(html_content, 'html'))
         raw = base64.urlsafe_b64encode(html_message.as_bytes())
 
         result = self.send_message('me', {'raw': raw.decode()})

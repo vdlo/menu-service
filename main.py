@@ -10,7 +10,7 @@ import hmac
 
 from gpt import GPT
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, Order
+    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, ForgotPassword, ResetPassword
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -21,7 +21,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import telegram_bot as tg
 from gmail import GmailClient
-
 # back
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
@@ -109,19 +108,16 @@ async def create_modify_dish(dish: Dish, current_user: User = Depends(get_curren
     sql = MenuSQL()
     return sql.create_modify_dish(dish)
 
-
 @app.post("/admin/create_modify_promo")  # "/admin/cmdish"
 async def create_modify_promo(promo: Promo, current_user: User = Depends(get_current_user)):
     promo.company_id = current_user.companyId
     sql = MenuSQL()
     return sql.create_modify_promo(promo)
 
-
 @app.get("/admin/get_promo_list")  # "/admin/getdishes"
 async def get_promo_list(current_user: User = Depends(get_current_user)) -> List[Promo]:
     sql = MenuSQL()
     return sql.get_promo_list(current_user.companyId)
-
 
 @app.get("/admin/get_dishes")  # "/admin/getdishes"
 async def get_dishes(current_user: User = Depends(get_current_user)):
@@ -133,7 +129,7 @@ async def get_dishes(current_user: User = Depends(get_current_user)):
 async def get_dish(id: int, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     dish = sql.get_dish(id)
-    # return this function
+   # return this function
     if dish.companyId != current_user.companyId:
         raise HTTPException(status_code=403, detail=f'Your company haven\'t dish with id {id}')
     return dish
@@ -156,28 +152,23 @@ async def set_dish_activity(id, active, current_user: User = Depends(get_current
     sql = MenuSQL()
     return sql.set_dish_activity(id, active, current_user.companyId)
 
-
 @app.post("/admin/update_dish_sort")
 async def update_dish_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.update_dish_sort(element)
-
 
 @app.post("/admin/update_promo_sort")
 async def update_dish_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.update_promo_sort(element)
 
-
-@app.post("/admin/update_section_sort", )
+@app.post("/admin/update_section_sort",)
 async def update_promo_sort(element: SortingPacket, current_user: User = Depends(get_current_user)):
     sql = MenuSQL()
     return sql.update_section_sort(element)
 
-
 @app.post("/admin/upload_file/")
-async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[
-    str, str]:
+async def create_upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)) -> Dict[str, str]:
     try:
         # Генерация нового имени файла
         file.filename = f"{uuid.uuid4()}.jpg"
@@ -195,9 +186,9 @@ async def create_upload_file(file: UploadFile = File(...), current_user: User = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
 
-
 @app.post("/admin/generate_description/")
 async def generate_description(promt: GptPromt, current_user: User = Depends(get_current_user)) -> Dict[str, str]:
+
     try:
         # Создания экземпляра класса GPT
         gpt = GPT(seed=current_user.companyId)
@@ -208,39 +199,35 @@ async def generate_description(promt: GptPromt, current_user: User = Depends(get
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating description: {e}")
 
-
-@app.post("/customer/new_customer_request", )
+@app.post("/customer/new_customer_request",)
 async def new_customer_request(customer_request: CustomerRequest):
     sql = MenuSQL()
     return sql.new_customer_request(customer_request)
 
-
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
-    company_link = 'dsfsdfsdf'  # sql.cudtomer_sign_up(customer_request)
+    result = sql.cudtomer_sign_up(customer_request)
+
 
     gmail_client = GmailClient(
         'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
     sender = "admin@me-qr.me"
-    to = customer_request.email
+    to = result.email
     subject = "New account"
-    data = {'subject': company_link,
-            'greeting': f'Hello, {customer_request.customer_name}!',
-            'message': 'Your account has been created. You can log in to your account using the link below.',
-            }
-    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', data)
-    return customer_request
 
+    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', result.dict())
+    return result
 
 @app.post("/customer/forgot_password")
-def forgot_password(email):
+def forgot_password(input: ForgotPassword):
+    email = input.email
+    print(email)
     sql = MenuSQL()
     if not sql.get_user(email):
         raise HTTPException(status_code=400, detail="User not found")
     new_token = create_jwt_token({"sub": email}, EXPIRATION_TIME=EXPIRATION_TIME)
-    gmail_client = GmailClient(
-        'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
+    gmail_client = GmailClient('client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
     sender = "admin@me-qr.me"
     to = email
     subject = "Password recovery"
@@ -248,6 +235,22 @@ def forgot_password(email):
     message = gmail_client.create_message(sender, to, subject, message_text)
     gmail_client.send_message("me", message)
 
+@app.post("/customer/recovery_password")
+def recovery_password(input: ResetPassword):
+    token = input.token
+    password = input.password
+
+    decoded_data = verify_jwt_token(token)
+    if not decoded_data:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    sql = MenuSQL()
+    user = sql.get_user(decoded_data["sub"])
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    hashed_password = pwd_context.hash(password)
+
+    sql.update_user_password(user.name, hashed_password)
+    #return {"Token": token, "Password": password}
 
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
@@ -257,6 +260,7 @@ async def sign_up(name: str, password: str, company_id: int = 0, current_user: U
     if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
+
     new_user = sql.new_user(User(name=name, hash=hashed_password, companyId=company_id))
     return new_user
 
@@ -319,7 +323,7 @@ async def webhook_front(
         # Обновляем код из репозитория
         subprocess.run(["git", "pull", "origin", "master"])
 
-        # Перезапускаем приложение через systemctl
+         # Перезапускаем приложение через systemctl
         subprocess.run(["sudo", "systemctl", "restart", "menu_service_front.service"])
 
     return {"status": "OK"}
@@ -336,20 +340,10 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str):
         raise HTTPException(status_code=400, detail="Invalid GitHub Webhook signature")
 
 
-app.post("/public/new_order")
-async def new_order(order: Order) -> Order:
-    # Отправка сообщения в телеграм
-    # Проверка на спам атаку
-    try:
-        sql = MenuSQL()
-        new_order = sql.new_order(order)
-        return new_order
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating new order: {e}")
-
-
 @app.get("/{link}")
 async def get_company_data(link: str, ) -> CompanyFullPackage:
+
+
     try:
         sql_instance = MenuSQL()
         result = sql_instance.get_company_data(link)
@@ -359,3 +353,5 @@ async def get_company_data(link: str, ) -> CompanyFullPackage:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
