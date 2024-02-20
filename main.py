@@ -338,7 +338,7 @@ async def get_company_data(link: str, ) -> CompanyFullPackage:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-app.post("/public/new_order")
+@app.post("/public/new_order")
 async def new_order(order: Order) -> Order:
     # Отправка сообщения в телеграм
     # Проверка на спам атаку
