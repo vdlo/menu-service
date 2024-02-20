@@ -10,7 +10,7 @@ import hmac
 
 from gpt import GPT
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, ForgotPassword, ResetPassword
+    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, Order
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -207,22 +207,23 @@ async def new_customer_request(customer_request: CustomerRequest):
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
-    result = sql.cudtomer_sign_up(customer_request)
+    company_link = 'dsfsdfsdf' # sql.cudtomer_sign_up(customer_request)
 
 
     gmail_client = GmailClient(
         'client_secret_941562501395-mip2shfoedg2iso8jj74pb9ks2tuu3a0.apps.googleusercontent.com.json')
     sender = "admin@me-qr.me"
-    to = result.email
+    to = customer_request.email
     subject = "New account"
-
-    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', result.dict())
-    return result
+    data = {'subject': company_link,
+            'greeting': f'Hello, {customer_request.customer_name}!',
+            'message': 'Your account has been created. You can log in to your account using the link below.',
+            }
+    gmail_client.send_email_using_template(sender, to, subject, 'template_sign_up.html', data)
+    return customer_request
 
 @app.post("/customer/forgot_password")
-def forgot_password(input: ForgotPassword):
-    email = input.email
-    print(email)
+def forgot_password(email):
     sql = MenuSQL()
     if not sql.get_user(email):
         raise HTTPException(status_code=400, detail="User not found")
@@ -235,23 +236,6 @@ def forgot_password(input: ForgotPassword):
     message = gmail_client.create_message(sender, to, subject, message_text)
     gmail_client.send_message("me", message)
 
-@app.post("/customer/recovery_password")
-def recovery_password(input: ResetPassword):
-    token = input.token
-    password = input.password
-
-    decoded_data = verify_jwt_token(token)
-    if not decoded_data:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    sql = MenuSQL()
-    user = sql.get_user(decoded_data["sub"])
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    hashed_password = pwd_context.hash(password)
-
-    sql.update_user_password(user.name, hashed_password)
-    #return {"Token": token, "Password": password}
-
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
     if not current_user.admin:
@@ -260,7 +244,6 @@ async def sign_up(name: str, password: str, company_id: int = 0, current_user: U
     if sql.get_user(name=name):
         raise HTTPException(status_code=400, detail="Nickname is busy")
     hashed_password = pwd_context.hash(password)
-
     new_user = sql.new_user(User(name=name, hash=hashed_password, companyId=company_id))
     return new_user
 
@@ -355,3 +338,13 @@ async def get_company_data(link: str, ) -> CompanyFullPackage:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+app.post("/public/new_order")
+async def new_order(order: Order) -> Order:
+    # Отправка сообщения в телеграм
+    # Проверка на спам атаку
+    try:
+        sql = MenuSQL()
+        new_order = sql.new_order(order)
+        return new_order
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating new order: {e}")

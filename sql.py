@@ -5,7 +5,8 @@ from fastapi import HTTPException
 from passlib.context import CryptContext
 
 from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket, \
-    Promo, CustomerRequest
+    Promo, CustomerRequest, Order
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 config = {
     'user': 'admin',
@@ -862,3 +863,6 @@ class MenuSQL:
             self.cnx.commit()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    def create_order(self, order: Order):
+        pass
