@@ -337,6 +337,30 @@ async def get_company_data(link: str, ) -> CompanyFullPackage:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/public/get_order_by_id")
+async def get_order_by_id(id: int) -> Order:
+    try:
+        sql = MenuSQL()
+        # order = sql.get_order_by_id(id)
+        # return order
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting order by id: {e}")
+@app.get("/admin/get_orders")
+async def get_orders(current_user: User = Depends(get_current_user)) -> List[Order]:
+    try:
+        sql = MenuSQL()
+        #orders = sql.get_orders(current_user.companyId, status = None)
+        #return orders
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting orders: {e}")
+@app.post("/admin/change_order_status")
+async def change_order_status(id: int, status: str) -> Order:
+    try:
+        sql = MenuSQL()
+        #order = sql.change_order_status(id, status)
+        #return order
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error changing order status: {e}")
 
 @app.post("/public/new_order")
 async def new_order(order: Order) -> Order:
@@ -344,7 +368,7 @@ async def new_order(order: Order) -> Order:
     # Проверка на спам атаку
     try:
         sql = MenuSQL()
-        new_order = sql.new_order(order)
+        new_order = sql.create_order(order)
         return new_order
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating new order: {e}")
