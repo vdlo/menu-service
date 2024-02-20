@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from passlib.context import CryptContext
 
 from model import User, Company, Dish, Hierarchy, HierarchyItem, Section, CompanyFullPackage, Payment, SortingPacket, \
-    Promo, CustomerRequest
+    Promo, CustomerRequest, Order
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 config = {
     'user': 'admin',
@@ -821,3 +821,7 @@ class MenuSQL:
                 sort_order += 1
 
             cursor.execute(f"UPDATE menudb.{table_name} SET sort = %s WHERE id = %s", (sort_order, record['id']))
+
+    def create_order(self, order: Order):
+        cursor = self.cnx.cursor(dictionary=True)
+        query = ("INSERT INTO menudb.orders"

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, Dict, List, Union
 from pydantic import BaseModel
 
@@ -123,3 +124,26 @@ class CustomerRequest(BaseModel):
 class GptPromt(BaseModel):
     promt: str
     theme: str
+
+class OrderBasketItem(BaseModel):
+    id: Optional[int] = None
+    dish_id: int
+    count: int
+    sum: int
+
+class Order(BaseModel):
+    id: Optional[int] = None
+    customer_name : str
+    custumer_email: Optional[str] = None
+    customer_id: Optional[int] = None
+    customer_phone: Optional[str] = None
+    customer_channel: Optional[str] = None
+    adress: Optional[str] = None
+    geo_tag: Optional[str] = None
+    delivery_type: Optional[str] = None
+    delivery_time_start: Optional[datetime] = None
+    delivery_time_end: Optional[datetime] = None
+    status: str
+    comment: Optional[str] = None
+    delivery_price: float
+    basket: List[OrderBasketItem] = []
