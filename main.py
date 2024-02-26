@@ -207,7 +207,7 @@ async def new_customer_request(customer_request: CustomerRequest):
 @app.post("/customer/sign_up")
 async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
     sql = MenuSQL()
-    company_link = 'dsfsdfsdf' # sql.cudtomer_sign_up(customer_request)
+    company_link = sql.cudtomer_sign_up(customer_request)
 
 
     gmail_client = GmailClient(
