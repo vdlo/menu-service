@@ -10,7 +10,7 @@ import hmac
 
 from gpt import GPT
 from model import Company, Section, Dish, CompanyFullPackage, Subsection, User, Hierarchy, HierarchyItem, \
-    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, Order
+    ServiceResponce, Payment, SortingPacket, Promo, CustomerRequest, GptPromt, Order, ResetPassword
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Request, Header
 from pydantic import BaseModel
 from sql import MenuSQL
@@ -224,6 +224,7 @@ async def sign_up(customer_request: CustomerRequest) -> CustomerRequest:
 
 @app.post("/customer/forgot_password")
 def forgot_password(email):
+
     sql = MenuSQL()
     if not sql.get_user(email):
         raise HTTPException(status_code=400, detail="User not found")
@@ -235,6 +236,22 @@ def forgot_password(email):
     message_text = f"Your password recovery link: https://me-qr.me/recovery/{new_token}"
     message = gmail_client.create_message(sender, to, subject, message_text)
     gmail_client.send_message("me", message)
+
+@app.post("/customer/recovery_password")
+def recovery_password(input: ResetPassword):
+    token = input.token
+    password = input.password
+
+    decoded_data = verify_jwt_token(token)
+    if not decoded_data:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    sql = MenuSQL()
+    user = sql.get_user(decoded_data["sub"])
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    hashed_password = pwd_context.hash(password)
+
+    sql.update_user_password(user.name, hashed_password)
 
 @app.post("/support/add_user")  # "/signup"
 async def sign_up(name: str, password: str, company_id: int = 0, current_user: User = Depends(get_current_user)):
