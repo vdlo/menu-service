@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import telegram_bot as tg
 from gmail import GmailClient
-# back
+# back //
 PROJECT_PATH_BACK = "/opt/menu-service"
 PROJECT_PATH_FRONT = "/opt/menu-service_v1"
 # front
